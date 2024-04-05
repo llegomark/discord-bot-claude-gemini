@@ -10,6 +10,8 @@ const Bottleneck = require('bottleneck');
 const app = express();
 const port = process.env.PORT || 4000;
 
+app.set('trust proxy', true);
+
 app.get('/', (_req, res) => {
   res.send('Neko Discord Bot is running!');
 });
