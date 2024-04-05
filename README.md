@@ -85,7 +85,6 @@ This guide will walk you through the process of setting up and running the Neko 
 
 **Interacting with the Bot:**
 
-* **Direct Messages:** Send a direct message to the bot to start a conversation with Neko.
 * **Mentions:** Mention the bot in a server channel to get Neko's attention.
 * **Slash Commands:** Use the `/clear` command to clear the conversation history or the `/save` command to save the conversation to your inbox.
 
