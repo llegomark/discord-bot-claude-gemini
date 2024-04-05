@@ -88,7 +88,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } catch (error) {
       console.error('Error handling /clear command:', error);
       try {
-        await interaction.editReply('Sorry, something went wrong while clearing your conversation history.');
+        if (interaction.deferred) {
+          await interaction.editReply('Sorry, something went wrong while clearing your conversation history.');
+        } else {
+          await interaction.reply('Sorry, something went wrong while clearing your conversation history.');
+        }
       } catch (replyError) {
         console.error('Error sending error message:', replyError);
       }
@@ -103,7 +107,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } catch (error) {
       console.error('Error handling /save command:', error);
       try {
-        await interaction.editReply('Sorry, something went wrong while saving your conversation.');
+        if (interaction.deferred) {
+          await interaction.editReply('Sorry, something went wrong while saving your conversation.');
+        } else {
+          await interaction.reply('Sorry, something went wrong while saving your conversation.');
+        }
       } catch (replyError) {
         console.error('Error sending error message:', replyError);
       }
@@ -196,9 +204,13 @@ async function processConversation({ message, messageContent }) {
       '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
       '> `Purring my way to a purrfect answer, one moment...`'
     ];
-    // Randomly select a thinking message
-    const randomIndex = Math.floor(Math.random() * thinkingMessages.length);
-    const botMessage = await message.reply(thinkingMessages[randomIndex]);
+    // Shuffle the thinkingMessages array using Fisher-Yates shuffle algorithm
+    for (let i = thinkingMessages.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [thinkingMessages[i], thinkingMessages[j]] = [thinkingMessages[j], thinkingMessages[i]];
+    }
+    // Select the first message from the shuffled array
+    const botMessage = await message.reply(thinkingMessages[0]);
     await conversationManager.handleModelResponse(botMessage, response, message);
     await stopTyping();
   } catch (error) {
