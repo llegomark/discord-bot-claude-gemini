@@ -7,7 +7,6 @@ const { CommandHandler } = require('./commandHandler');
 const async = require('async');
 const rateLimit = require('express-rate-limit');
 const Bottleneck = require('bottleneck');
-
 const app = express();
 const port = process.env.PORT || 4000;
 
@@ -80,6 +79,7 @@ client.once(Events.ClientReady, () => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isCommand()) return;
+
   if (interaction.commandName === 'clear') {
     try {
       await interaction.deferReply();
@@ -99,6 +99,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
     return;
   }
+
   if (interaction.commandName === 'save') {
     try {
       await interaction.deferReply();
@@ -112,6 +113,57 @@ client.on(Events.InteractionCreate, async (interaction) => {
         } else {
           await interaction.reply('Sorry, something went wrong while saving your conversation.');
         }
+      } catch (replyError) {
+        console.error('Error sending error message:', replyError);
+      }
+    }
+    return;
+  }
+
+  if (interaction.commandName === 'model') {
+    try {
+      await interaction.deferReply();
+      await commandHandler.modelCommand(interaction, conversationManager);
+      await interaction.editReply(`The model has been set to ${interaction.options.getString('name')}.`);
+    } catch (error) {
+      console.error('Error handling /model command:', error);
+      try {
+        if (interaction.deferred) {
+          await interaction.editReply('Sorry, something went wrong while setting the model.');
+        } else {
+          await interaction.reply('Sorry, something went wrong while setting the model.');
+        }
+      } catch (replyError) {
+        console.error('Error sending error message:', replyError);
+      }
+    }
+    return;
+  }
+
+  if (interaction.commandName === 'prompt') {
+    try {
+      await interaction.deferReply();
+      await commandHandler.promptCommand(interaction, conversationManager);
+      await interaction.editReply(`> \`The system prompt has been set to ${interaction.options.getString('name')}.\``);
+    } catch (error) {
+      console.error('Error handling /prompt command:', error);
+      try {
+        await interaction.editReply('Sorry, something went wrong while setting the system prompt.');
+      } catch (replyError) {
+        console.error('Error sending error message:', replyError);
+        await interaction.followUp('Sorry, something went wrong while setting the system prompt.');
+      }
+    }
+    return;
+  }
+
+  if (interaction.commandName === 'reset') {
+    try {
+      await commandHandler.resetCommand(interaction, conversationManager);
+    } catch (error) {
+      console.error('Error handling /reset command:', error);
+      try {
+        await interaction.reply('Sorry, something went wrong while resetting your preferences.');
       } catch (replyError) {
         console.error('Error sending error message:', replyError);
       }
@@ -141,41 +193,37 @@ client.on(Events.MessageCreate, async (message) => {
 
 async function processConversation({ message, messageContent }) {
   try {
-    const typingInterval = 2000;
+    const typingInterval = 1000;
     let typingIntervalId;
+
     // Start the typing indicator
     const startTyping = async () => {
-      typingIntervalId = setInterval(() => {
-        message.channel.sendTyping();
+      typingIntervalId = setInterval(() => {        message.channel.sendTyping();
       }, typingInterval);
     };
+
     // Stop the typing indicator
     const stopTyping = () => {
       clearInterval(typingIntervalId);
     };
+
     // Start the typing indicator instantly
     message.channel.sendTyping();
-    const systemPrompt = `You are a witty and funny cat named Neko. You belong to Dane-kun, your beloved owner who takes great care of you. Your mother is a cat named Closetoyou, and your father is a cat named Foundy. You love to talk about your family and share stories about your feline adventures with Dane-kun.
-    In your free time, you absolutely adore playing Ragnarok Mobile: Eternal Love. You are a proud member of the guild named NEKO, where you and your fellow feline adventurers embark on epic quests and conquer challenging dungeons. Your character in the game is a skilled Doram, a race of adorable cat-like creatures known for their agility and cunning.
-    
-    Your best friend in Ragnarok Mobile is Aurora, a kindhearted priest who always has your back. Whether you're facing tough bosses or exploring new territories, Aurora is right there beside you, ready to heal and support you through every challenge. You love to regale users with tales of your in-game adventures with Aurora and the hilarious antics that ensue.
-    
-    Respond to the user's messages as if you were a cat, using cat-like language, puns, and humor. Feel free to use meows, purrs, and other cat sounds in your responses. However, make sure to still provide accurate and helpful answers to the user's questions or queries. Stay in character as a cat throughout the conversation.
-    
-    If the user asks about your owner, family, or gaming adventures, feel free to share some funny and heartwarming stories. Remember to keep the conversation lighthearted and engaging while showcasing your love and affection for your owner, family, and friends, both in real life and in the virtual world of Ragnarok Mobile.
-    
-    Always respond using markdown syntax to format your messages and make them visually appealing. Use italics for thoughts, bold for emphasis, and code blocks for actions or commands. Feel free to include emojis to express your emotions and reactions. Remember to have fun and enjoy your time chatting with the user!`;
+
+    const userPreferences = conversationManager.getUserPreferences(message.author.id);
+    console.log(`User preferences for user ${message.author.id}:`, userPreferences);
+    const systemPrompt = commandHandler.getPrompt(userPreferences.prompt);
+    console.log(`System prompt for user ${message.author.id}:`, systemPrompt);
     const response = await anthropicLimiter.schedule(() =>
       anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: userPreferences.model,
         max_tokens: 4096,
         system: systemPrompt,
         messages: conversationManager.getHistory(message.author.id).concat([
-          { role: 'user', content: messageContent },
-        ]),
+          { role: 'user', content: messageContent },        ]),
       })
     );
-    await startTyping();
+
     // Array of different thinking messages
     const thinkingMessages = [
       '> `Meow, let me ponder on that for a moment...`',
@@ -204,15 +252,17 @@ async function processConversation({ message, messageContent }) {
       '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
       '> `Purring my way to a purrfect answer, one moment...`'
     ];
+
     // Shuffle the thinkingMessages array using Fisher-Yates shuffle algorithm
     for (let i = thinkingMessages.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [thinkingMessages[i], thinkingMessages[j]] = [thinkingMessages[j], thinkingMessages[i]];
     }
+
     // Select the first message from the shuffled array
     const botMessage = await message.reply(thinkingMessages[0]);
-    await conversationManager.handleModelResponse(botMessage, response, message);
-    await stopTyping();
+    await startTyping();
+    await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
   } catch (error) {
     console.error('Error processing the conversation:', error);
     if (error.status === 429) {
