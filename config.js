@@ -1,4 +1,5 @@
 const { HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+const { ActivityType } = require('discord.js');
 
 module.exports.config = {
   safetySettings: [
@@ -6,5 +7,40 @@ module.exports.config = {
     { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
     { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  ],
+  activities: [
+    { name: 'Chasing virtual mice 🐭', type: ActivityType.Playing },
+    { name: 'Purring to the sound of Prontera Theme Song 😽', type: ActivityType.Listening },
+    { name: 'Watching for new messages to pounce on 🐾', type: ActivityType.Watching },
+    { name: 'Napping between conversations 😴', type: ActivityType.Playing },
+    { name: 'Grooming my virtual fur 🐈', type: ActivityType.Playing },
+    { name: 'Plotting world domination... I mean, meow! 😼', type: ActivityType.Watching },
+  ],
+  thinkingMessages: [
+    '> `Meow, let me ponder on that for a moment...`',
+    '> `Purring in thought, one second...`',
+    '> `Hmm, let me scratch my whiskers and think...`',
+    '> `*tail swishes back and forth* Meow, processing...`',
+    '> `Chasing the answer in my mind, be right back...`',
+    '> `Meow, let me consult my whiskers for wisdom...`',
+    '> `Purring intensifies as I contemplate your query...`',
+    '> `Hmm, let me chase this thought like a laser pointer...`',
+    '> `*tail swishes back and forth* Meow, processing at the speed of a catnap...`',
+    '> `Chasing the answer in my mind, it\'s like hunting a sneaky mouse...`',
+    '> `Meow, let me paw-nder on this for a moment...`',
+    '> `*stretches lazily* Meow, just waking up my brain cells...`',
+    '> `Purrhaps I should ask my feline ancestors for guidance...`',
+    '> `*knocks over a glass of water* Oops, I meant to do that! Meow, thinking...`',
+    '> `Meow, let me consult the ancient cat scriptures...`',
+    '> `*chases own tail* Meow, I\'m on the tail of a great idea...`',
+    '> `Meow, let me nap on this thought for a bit...`',
+    '> `*stares intently at a blank wall* Meow, downloading inspiration...`',
+    '> `Purring my way through this mental obstacle course...`',
+    '> `*bats at a toy mouse* Meow, just warming up my problem-solving skills...`',
+    '> `Meow, let me dig through my litter box of knowledge...`',
+    '> `*sits in an empty box* Meow, thinking outside the box...`',
+    '> `Meow, let me groom my brain for maximum clarity...`',
+    '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
+    '> `Purring my way to a purrfect answer, one moment...`',
   ],
 };

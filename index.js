@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client, GatewayIntentBits, Events, ActivityType, PermissionFlagsBits } = require('discord.js');
+const { Client, GatewayIntentBits, Events, PermissionFlagsBits } = require('discord.js');
 const { Anthropic } = require('@anthropic-ai/sdk');
 const { ConversationManager } = require('./conversationManager');
 const { CommandHandler } = require('./commandHandler');
@@ -13,6 +13,8 @@ const { helpCommand } = require('./helpCommand');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { config } = require('./config');
 const { ErrorHandler } = require('./errorHandler');
+
+let activityIndex = 0;
 
 app.get('/', (_req, res) => {
   res.send('Neko Discord Bot is running!');
@@ -37,16 +39,6 @@ const conversationManager = new ConversationManager();
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
 const errorHandler = new ErrorHandler();
-
-const activities = [
-  { name: 'Chasing virtual mice 🐭', type: ActivityType.Playing },
-  { name: 'Purring to the sound of Prontera Theme Song 😽', type: ActivityType.Listening },
-  { name: 'Watching for new messages to pounce on 🐾', type: ActivityType.Watching },
-  { name: 'Napping between conversations 😴', type: ActivityType.Playing },
-  { name: 'Grooming my virtual fur 🐈', type: ActivityType.Playing },
-  { name: 'Plotting world domination... I mean, meow! 😼', type: ActivityType.Watching },
-];
-let activityIndex = 0;
 
 // Create a rate limiter middleware
 const limiter = rateLimit({
@@ -76,14 +68,14 @@ client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
   // Set the initial status
   client.user.setPresence({
-    activities: [activities[activityIndex]],
+    activities: [config.activities[activityIndex]],
     status: 'online',
   });
   // Change the activity every 30000ms (30 seconds)
   setInterval(() => {
-    activityIndex = (activityIndex + 1) % activities.length;
+    activityIndex = (activityIndex + 1) % config.activities.length;
     client.user.setPresence({
-      activities: [activities[activityIndex]],
+      activities: [config.activities[activityIndex]],
       status: 'online',
     });
   }, 30000);
@@ -223,41 +215,14 @@ async function processConversation({ message, messageContent }) {
           ]),
         })
       );
-      // Array of different thinking messages
-      const thinkingMessages = [
-        '> `Meow, let me ponder on that for a moment...`',
-        '> `Purring in thought, one second...`',
-        '> `Hmm, let me scratch my whiskers and think...`',
-        '> `*tail swishes back and forth* Meow, processing...`',
-        '> `Chasing the answer in my mind, be right back...`',
-        '> `Meow, let me consult my whiskers for wisdom...`',
-        '> `Purring intensifies as I contemplate your query...`',
-        '> `Hmm, let me chase this thought like a laser pointer...`',
-        '> `*tail swishes back and forth* Meow, processing at the speed of a catnap...`',
-        '> `Chasing the answer in my mind, it\'s like hunting a sneaky mouse...`',
-        '> `Meow, let me paw-nder on this for a moment...`',
-        '> `*stretches lazily* Meow, just waking up my brain cells...`',
-        '> `Purrhaps I should ask my feline ancestors for guidance...`',
-        '> `*knocks over a glass of water* Oops, I meant to do that! Meow, thinking...`',
-        '> `Meow, let me consult the ancient cat scriptures...`',
-        '> `*chases own tail* Meow, I\'m on the tail of a great idea...`',
-        '> `Meow, let me nap on this thought for a bit...`',
-        '> `*stares intently at a blank wall* Meow, downloading inspiration...`',
-        '> `Purring my way through this mental obstacle course...`',
-        '> `*bats at a toy mouse* Meow, just warming up my problem-solving skills...`',
-        '> `Meow, let me dig through my litter box of knowledge...`',
-        '> `*sits in an empty box* Meow, thinking outside the box...`',
-        '> `Meow, let me groom my brain for maximum clarity...`',
-        '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
-        '> `Purring my way to a purrfect answer, one moment...`',
-      ];
-      // Shuffle the thinkingMessages array using Fisher-Yates shuffle algorithm
-      for (let i = thinkingMessages.length - 1; i > 0; i--) {
+      // Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
+      const shuffledThinkingMessages = [...config.thinkingMessages];
+      for (let i = shuffledThinkingMessages.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [thinkingMessages[i], thinkingMessages[j]] = [thinkingMessages[j], thinkingMessages[i]];
+        [shuffledThinkingMessages[i], shuffledThinkingMessages[j]] = [shuffledThinkingMessages[j], shuffledThinkingMessages[i]];
       }
       // Select the first message from the shuffled array
-      const botMessage = await message.reply(thinkingMessages[0]);
+      const botMessage = await message.reply(shuffledThinkingMessages[0]);
       await startTyping();
       await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
     } else if (modelName === process.env.GOOGLE_MODEL_NAME) {
@@ -267,7 +232,14 @@ async function processConversation({ message, messageContent }) {
         history: conversationManager.getGoogleHistory(message.author.id),
         safetySettings: config.safetySettings,
       });
-      const botMessage = await message.reply('> `Generating a response...`');
+      // Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
+      const shuffledThinkingMessages = [...config.thinkingMessages];
+      for (let i = shuffledThinkingMessages.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledThinkingMessages[i], shuffledThinkingMessages[j]] = [shuffledThinkingMessages[j], shuffledThinkingMessages[i]];
+      }
+      // Select the first message from the shuffled array
+      const botMessage = await message.reply(shuffledThinkingMessages[0]);
       await startTyping();
       await conversationManager.handleModelResponse(botMessage, () => chat.sendMessageStream(messageContent), message, stopTyping);
     }

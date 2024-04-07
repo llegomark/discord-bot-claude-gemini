@@ -63,8 +63,9 @@ class ConversationManager {
       }
       // Split the response into chunks of 2000 characters or less
       const chunks = this.splitResponse(finalResponse);
-      // Send each chunk as a separate message
+      // Send each chunk as a separate message and update the typing indicator between each chunk
       for (const chunk of chunks) {
+        await botMessage.channel.sendTyping();
         await botMessage.channel.send(chunk);
       }
       this.updateChatHistory(userId, originalMessage.content, finalResponse);
