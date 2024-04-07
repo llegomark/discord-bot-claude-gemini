@@ -1,6 +1,6 @@
-# Discord Bot with Anthropic API (Claude) and Google Generative AI Integration
+# Conversational Discord Bot (Claude & Gemini)
 
-This is a Discord bot that integrates with the Anthropic API, specifically the Claude model, and Google Gemini to provide conversational capabilities. Claude is a highly capable AI model created by Anthropic, and Google Gemini offers powerful language models for generating human-like responses. The bot can respond to user messages, maintain conversation history, and perform various commands while engaging users with different personas based on the selected model and prompt.
+This Discord bot leverages the Anthropic Claude and Google Gemini APIs to deliver dynamic conversational experiences. Powered by Anthropic's advanced Claude models and Google's robust Gemini language models, the bot can respond to user messages, maintain conversation history, and execute various commands. It also offers engaging interactions with diverse personas, tailored by the selected model and prompt.
 
 ## Features
 - Responds to user messages using the Anthropic API (Claude models) and Google Generative AI
@@ -32,7 +32,7 @@ This is a Discord bot that integrates with the Anthropic API, specifically the C
 ![Screenshot](screenshots/Screenshot6.png)
 ![Screenshot](screenshots/Screenshot7.png)
 
-## Neko Discord Bot Setup Guide
+## Discord Bot Setup Guide
 This guide will walk you through the process of setting up and running the Neko Discord Bot on your own server.
 
 **Requirements:**
@@ -46,11 +46,11 @@ This guide will walk you through the process of setting up and running the Neko 
     - Open a terminal or command prompt and navigate to the directory where you want to store the bot's files.
     - Clone the repository using git:
     ```bash
-    git clone https://github.com/llegomark/anthropic-claude-discord-bot.git
+    git clone https://github.com/llegomark/discord-bot-claude-gemini.git
     ```
     - Navigate to the newly created directory:
     ```bash
-    cd anthropic-claude-discord-bot
+    cd discord-bot-claude-gemini
     ```
 
 2. **Install Dependencies:**
