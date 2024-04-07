@@ -3,8 +3,8 @@ class ConversationManager {
     this.chatHistories = {};
     this.userPreferences = {};
     this.defaultPreferences = {
-      model: 'claude-3-haiku-20240307',
-      prompt: 'neko_cat',
+      model: 'claude-3-opus-20240229',
+      prompt: 'helpful_assistant',
     };
   }
 

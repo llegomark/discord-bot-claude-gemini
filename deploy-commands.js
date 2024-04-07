@@ -34,7 +34,8 @@ const commands = [
         .addChoices(
           { name: 'neko cat', value: 'neko_cat' },
           { name: 'act as a JavaScript Developer', value: 'javascript_developer' },
-          { name: 'act as a Python Developer', value: 'python_developer' }
+          { name: 'act as a Python Developer', value: 'python_developer' },
+          { name: 'act as a Helpful Assistant', value: 'helpful_assistant' }
         )
     )
     .setDMPermission(false),
