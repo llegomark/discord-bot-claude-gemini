@@ -71,10 +71,13 @@ class ConversationManager {
       // Send the clear command message after every bot message
       const userPreferences = this.getUserPreferences(userId);
       const modelName = userPreferences.model;
-      const clearCommandMessage = `
-        > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
-      `;
-      await botMessage.channel.send(clearCommandMessage);
+      const messageCount = this.chatHistories[userId].length;
+      if (messageCount % 3 === 0) {
+        const clearCommandMessage = `
+          > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+        `;
+        await botMessage.channel.send(clearCommandMessage);
+      }
     } catch (error) {
       console.error(error.message);
       if (error.status === 429) {

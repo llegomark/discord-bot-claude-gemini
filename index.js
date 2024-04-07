@@ -297,7 +297,7 @@ async function processConversation({ message, messageContent }) {
     // Check if it's a new conversation or the bot is mentioned
     if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
       const clearCommandMessage = `
-        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions.*
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
       `;
       await message.channel.send(clearCommandMessage);
     }
