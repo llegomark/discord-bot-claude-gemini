@@ -12,7 +12,7 @@ async function helpCommand(interaction) {
       { name: '/prompt', value: 'Change the system prompt used by the bot. Usage: `/prompt [prompt_name]`' },
       { name: '/reset', value: 'Reset the model and prompt to the default settings.' },
       { name: '/help', value: 'Displays this help message.' },
-      { name: 'Installation & Activation', value: 'To install and activate the Discord bot on your server, please DM @markllego on either Discord or Twitter.' },
+      { name: 'Installation & Activation', value: 'To install and activate the Discord bot on your server, please DM [markllego](https://discord.com/users/1012984419029622784) on either Discord or [Twitter](https://twitter.com/markllego).' },
     )
     .setTimestamp();
 
