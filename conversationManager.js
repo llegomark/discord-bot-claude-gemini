@@ -15,6 +15,13 @@ class ConversationManager {
     })) || [];
   }
 
+  getGoogleHistory(userId) {
+    return this.chatHistories[userId]?.map((line, index) => ({
+      role: index % 2 === 0 ? 'user' : 'model',
+      parts: [{ text: line }],
+    })) || [];
+  }
+
   updateChatHistory(userId, userMessage, modelResponse) {
     if (!this.chatHistories[userId]) {
       this.chatHistories[userId] = [];
@@ -42,17 +49,33 @@ class ConversationManager {
   async handleModelResponse(botMessage, response, originalMessage, stopTyping) {
     const userId = originalMessage.author.id;
     try {
-      const finalResponse = response.content[0].text;
+      let finalResponse;
+
+      if (typeof response === 'function') {
+        // Google AI response
+        const messageResult = await response();
+        finalResponse = '';
+        for await (const chunk of messageResult.stream) {
+          finalResponse += await chunk.text();
+        }
+      } else {
+        // Anthropic response
+        finalResponse = response.content[0].text;
+      }
+
       // Split the response into chunks of 2000 characters or less
       const chunks = this.splitResponse(finalResponse);
+
       // Send each chunk as a separate message
       for (const chunk of chunks) {
         await botMessage.channel.send(chunk);
       }
+
       this.updateChatHistory(userId, originalMessage.content, finalResponse);
+
       // Send the clear command message after every bot message
       const clearCommandMessage = `
-        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions.*
       `;
       await botMessage.channel.send(clearCommandMessage);
     } catch (error) {
@@ -70,6 +93,7 @@ class ConversationManager {
   splitResponse(response) {
     const chunks = [];
     const maxLength = 2000;
+
     while (response.length > maxLength) {
       const chunk = response.slice(0, maxLength);
       const lastSpaceIndex = chunk.lastIndexOf(' ');
@@ -77,9 +101,11 @@ class ConversationManager {
       chunks.push(response.slice(0, sliceIndex));
       response = response.slice(sliceIndex).trim();
     }
+
     if (response.length > 0) {
       chunks.push(response);
     }
+
     return chunks;
   }
 

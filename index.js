@@ -10,6 +10,8 @@ const Bottleneck = require('bottleneck');
 const app = express();
 const port = process.env.PORT || 4000;
 const { helpCommand } = require('./helpCommand');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { config } = require('./config');
 
 app.get('/', (_req, res) => {
   res.send('Neko Discord Bot is running!');
@@ -29,6 +31,7 @@ const client = new Client({
 });
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const conversationManager = new ConversationManager();
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
@@ -206,74 +209,92 @@ async function processConversation({ message, messageContent }) {
   try {
     const typingInterval = 1000;
     let typingIntervalId;
-
     // Start the typing indicator
     const startTyping = async () => {
-      typingIntervalId = setInterval(() => {        message.channel.sendTyping();
+      typingIntervalId = setInterval(() => {
+        message.channel.sendTyping();
       }, typingInterval);
     };
-
     // Stop the typing indicator
     const stopTyping = () => {
       clearInterval(typingIntervalId);
     };
-
     // Start the typing indicator instantly
     message.channel.sendTyping();
-
     const userPreferences = conversationManager.getUserPreferences(message.author.id);
     console.log(`User preferences for user ${message.author.id}:`, userPreferences);
-    const systemPrompt = commandHandler.getPrompt(userPreferences.prompt);
-    console.log(`System prompt for user ${message.author.id}:`, systemPrompt);
-    const response = await anthropicLimiter.schedule(() =>
-      anthropic.messages.create({
-        model: userPreferences.model,
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: conversationManager.getHistory(message.author.id).concat([
-          { role: 'user', content: messageContent },        ]),
-      })
-    );
+    const modelName = userPreferences.model;
 
-    // Array of different thinking messages
-    const thinkingMessages = [
-      '> `Meow, let me ponder on that for a moment...`',
-      '> `Purring in thought, one second...`',
-      '> `Hmm, let me scratch my whiskers and think...`',
-      '> `*tail swishes back and forth* Meow, processing...`',
-      '> `Chasing the answer in my mind, be right back...`',
-      '> `Meow, let me consult my whiskers for wisdom...`',
-      '> `Purring intensifies as I contemplate your query...`',
-      '> `Hmm, let me chase this thought like a laser pointer...`',
-      '> `*tail swishes back and forth* Meow, processing at the speed of a catnap...`',
-      '> `Chasing the answer in my mind, it\'s like hunting a sneaky mouse...`',
-      '> `Meow, let me paw-nder on this for a moment...`',
-      '> `*stretches lazily* Meow, just waking up my brain cells...`',
-      '> `Purrhaps I should ask my feline ancestors for guidance...`',
-      '> `*knocks over a glass of water* Oops, I meant to do that! Meow, thinking...`',
-      '> `Meow, let me consult the ancient cat scriptures...`',
-      '> `*chases own tail* Meow, I\'m on the tail of a great idea...`',
-      '> `Meow, let me nap on this thought for a bit...`',
-      '> `*stares intently at a blank wall* Meow, downloading inspiration...`',
-      '> `Purring my way through this mental obstacle course...`',
-      '> `*bats at a toy mouse* Meow, just warming up my problem-solving skills...`',
-      '> `Meow, let me dig through my litter box of knowledge...`',
-      '> `*sits in an empty box* Meow, thinking outside the box...`',
-      '> `Meow, let me groom my brain for maximum clarity...`',
-      '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
-      '> `Purring my way to a purrfect answer, one moment...`'
-    ];
-
-    // Shuffle the thinkingMessages array using Fisher-Yates shuffle algorithm
-    for (let i = thinkingMessages.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [thinkingMessages[i], thinkingMessages[j]] = [thinkingMessages[j], thinkingMessages[i]];
+    if (modelName.startsWith('claude')) {
+      // Use Anthropic API (Claude)
+      const systemPrompt = commandHandler.getPrompt(userPreferences.prompt);
+      console.log(`System prompt for user ${message.author.id}:`, systemPrompt);
+      const response = await anthropicLimiter.schedule(() =>
+        anthropic.messages.create({
+          model: modelName,
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: conversationManager.getHistory(message.author.id).concat([
+            { role: 'user', content: messageContent },
+          ]),
+        })
+      );
+      // Array of different thinking messages
+      const thinkingMessages = [
+        '> `Meow, let me ponder on that for a moment...`',
+        '> `Purring in thought, one second...`',
+        '> `Hmm, let me scratch my whiskers and think...`',
+        '> `*tail swishes back and forth* Meow, processing...`',
+        '> `Chasing the answer in my mind, be right back...`',
+        '> `Meow, let me consult my whiskers for wisdom...`',
+        '> `Purring intensifies as I contemplate your query...`',
+        '> `Hmm, let me chase this thought like a laser pointer...`',
+        '> `*tail swishes back and forth* Meow, processing at the speed of a catnap...`',
+        '> `Chasing the answer in my mind, it\'s like hunting a sneaky mouse...`',
+        '> `Meow, let me paw-nder on this for a moment...`',
+        '> `*stretches lazily* Meow, just waking up my brain cells...`',
+        '> `Purrhaps I should ask my feline ancestors for guidance...`',
+        '> `*knocks over a glass of water* Oops, I meant to do that! Meow, thinking...`',
+        '> `Meow, let me consult the ancient cat scriptures...`',
+        '> `*chases own tail* Meow, I\'m on the tail of a great idea...`',
+        '> `Meow, let me nap on this thought for a bit...`',
+        '> `*stares intently at a blank wall* Meow, downloading inspiration...`',
+        '> `Purring my way through this mental obstacle course...`',
+        '> `*bats at a toy mouse* Meow, just warming up my problem-solving skills...`',
+        '> `Meow, let me dig through my litter box of knowledge...`',
+        '> `*sits in an empty box* Meow, thinking outside the box...`',
+        '> `Meow, let me groom my brain for maximum clarity...`',
+        '> `*knocks over a potted plant* Meow, just rearranging my thoughts...`',
+        '> `Purring my way to a purrfect answer, one moment...`',
+      ];
+      // Shuffle the thinkingMessages array using Fisher-Yates shuffle algorithm
+      for (let i = thinkingMessages.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [thinkingMessages[i], thinkingMessages[j]] = [thinkingMessages[j], thinkingMessages[i]];
+      }
+      // Select the first message from the shuffled array
+      const botMessage = await message.reply(thinkingMessages[0]);
+      await startTyping();
+      await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
+    } else if (modelName === 'gemini-pro') {
+      // Use Google Generative AI
+      const model = await genAI.getGenerativeModel({ model: modelName });
+      const chat = model.startChat({
+        history: conversationManager.getGoogleHistory(message.author.id),
+        safetySettings: config.safetySettings,
+      });
+      const botMessage = await message.reply('> `Generating a response...`');
+      await startTyping();
+      await conversationManager.handleModelResponse(botMessage, () => chat.sendMessageStream(messageContent), message, stopTyping);
     }
 
-    // Select the first message from the shuffled array
-    const botMessage = await message.reply(thinkingMessages[0]);
-    await startTyping();
-    await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
+    // Check if it's a new conversation or the bot is mentioned
+    if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
+      const clearCommandMessage = `
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions.*
+      `;
+      await message.channel.send(clearCommandMessage);
+    }
   } catch (error) {
     console.error('Error processing the conversation:', error);
     if (error.status === 429) {

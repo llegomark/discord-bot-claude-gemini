@@ -10,7 +10,7 @@ const commands = [
     .setName('save')
     .setDescription('Saves the current conversation and sends it to your inbox.')
     .setDMPermission(false),
-  new SlashCommandBuilder()
+    new SlashCommandBuilder()
     .setName('model')
     .setDescription('Change the model used by the bot.')
     .addStringOption(option =>
@@ -20,7 +20,8 @@ const commands = [
         .addChoices(
           { name: 'claude-3-opus-20240229', value: 'claude-3-opus-20240229' },
           { name: 'claude-3-sonnet-20240229', value: 'claude-3-sonnet-20240229' },
-          { name: 'claude-3-haiku-20240307', value: 'claude-3-haiku-20240307' }
+          { name: 'claude-3-haiku-20240307', value: 'claude-3-haiku-20240307' },
+          { name: 'gemini-pro', value: 'gemini-pro' }
         )
     )
     .setDMPermission(false),
