@@ -94,7 +94,7 @@ This guide will walk you through the process of setting up and running the Neko 
     - The bot will connect to Discord and be ready to interact with users.
 
 **Interacting with the Bot:**
-* **Mentions:** Mention the bot in a server channel to get its attention.
+* **Seamless Conversation:** To chat directly with the bot, ensure you are in a channel where the bot has appropriate permissions and the channel ID is included in the allowed list. Once set up, simply send your message in the channel, and the bot will respond accordingly without needing a mention.
 * **Slash Commands:** Use the available slash commands to interact with the bot and perform various actions.
 
 **Additional Notes:**
