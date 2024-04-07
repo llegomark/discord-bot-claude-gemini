@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client, GatewayIntentBits, Events, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Events, ActivityType, PermissionFlagsBits } = require('discord.js');
 const { Anthropic } = require('@anthropic-ai/sdk');
 const { ConversationManager } = require('./conversationManager');
 const { CommandHandler } = require('./commandHandler');
@@ -150,6 +150,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await commandHandler.resetCommand(interaction, conversationManager);
     } catch (error) {
       await errorHandler.handleError(error, interaction);
+    }
+    return;
+  }
+
+  if (interaction.commandName === 'testerror') {
+    try {
+      await interaction.deferReply();
+      // Check if the user has the required permission
+      if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageChannels)) {
+        await interaction.editReply('You do not have permission to use this command. Only the channel owner can trigger test errors.');
+        return;
+      }
+      // Trigger a test error
+      throw new Error('This is a test error triggered by the /testerror command.');
+    } catch (error) {
+      await errorHandler.handleError(error, interaction);
+      await interaction.editReply('A test error has been triggered. Check the error notification channel for details.');
     }
     return;
   }

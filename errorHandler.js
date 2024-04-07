@@ -4,7 +4,11 @@ const { WebhookClient } = require('discord.js');
 class ErrorHandler {
   async handleError(error, message) {
     console.error('Error processing the message:', error);
-    await message.reply('Sorry, something went wrong! Our team has been notified and will look into the issue.');
+    if (error.message === 'This is a test error triggered by the /testerror command.') {
+      await message.editReply('Test error triggered successfully. Check the error notification channel for details.');
+    } else {
+      await message.reply('Sorry, something went wrong! Our team has been notified and will look into the issue.');
+    }
     // Log error details for debugging
     console.error('Error details:', {
       message: error.message,
