@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const Bottleneck = require('bottleneck');
 const app = express();
 const port = process.env.PORT || 4000;
+const { helpCommand } = require('./helpCommand');
 
 app.get('/', (_req, res) => {
   res.send('Neko Discord Bot is running!');
@@ -79,6 +80,16 @@ client.once(Events.ClientReady, () => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isCommand()) return;
+
+  if (interaction.commandName === 'help') {
+    try {
+      await helpCommand(interaction);
+    } catch (error) {
+      console.error('Error handling /help command:', error);
+      await interaction.reply('Sorry, something went wrong while displaying the help message.');
+    }
+    return;
+  }
 
   if (interaction.commandName === 'clear') {
     try {

@@ -52,7 +52,7 @@ class ConversationManager {
       this.updateChatHistory(userId, originalMessage.content, finalResponse);
       // Send the clear command message after every bot message
       const clearCommandMessage = `
-        > *Meow, it's Neko here! 😸 If you want to start fresh with a new conversation, just use the \`/clear\` command. It's like giving me a brand new ball of yarn to play with! 🧶 This helps me keep track of our chat and ensures that I don't get my whiskers tangled up in old context. So, whenever you need a clean slate, just \`/clear\` the way and let's pounce into a new topic together! 😽*
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
       `;
       await botMessage.channel.send(clearCommandMessage);
     } catch (error) {

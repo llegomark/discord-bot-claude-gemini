@@ -43,6 +43,10 @@ const commands = [
     .setName('reset')
     .setDescription('Reset the model and prompt to the default settings.')
     .setDMPermission(false),
+  new SlashCommandBuilder()
+    .setName('help')
+    .setDescription('Displays the list of available commands and their usage.')
+    .setDMPermission(false),
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
