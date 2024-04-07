@@ -23,6 +23,8 @@ This Discord bot leverages the Anthropic Claude and Google Gemini APIs to delive
 - Handles errors gracefully and sends error notifications via Discord webhook
 - Logs errors to files for debugging and monitoring purposes
 
+This project is under active development, and I may introduce breaking changes or new features in future updates based on my evolving use case and requirements.
+
 ## Screenshots
 ![Screenshot](screenshots/Screenshot1.png)
 ![Screenshot](screenshots/Screenshot2.png)
@@ -103,6 +105,12 @@ This guide will walk you through the process of setting up and running the Neko 
 * Make sure to keep your API keys and bot token secure. Do not share them publicly.
 * Refer to the [Discord.js documentation](https://discord.js.org/docs/packages/discord.js/14.14.1), [Anthropic API documentation](https://docs.anthropic.com/claude/docs/intro-to-claude), and [Google Gemini API documentation](https://ai.google.dev/docs) for more information on the available features and options.
 
-**Enjoy interacting with the Discord bot and exploring its various capabilities!**
+## Contributing
 
-Please note that this project is a work in progress, and breaking changes or new features may be introduced in future updates.
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+**Enjoy interacting with the Discord bot and exploring its various capabilities!**
