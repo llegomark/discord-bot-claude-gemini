@@ -64,6 +64,12 @@ const anthropicLimiter = new Bottleneck({
   minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
 
+// Create a rate limiter for the Google Generative AI API
+const googleLimiter = new Bottleneck({
+  maxConcurrent: 1,
+  minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
+});
+
 client.once(Events.ClientReady, () => {
   console.log(`Logged in as ${client.user.tag}!`);
   // Set the initial status
@@ -276,9 +282,9 @@ async function processConversation({ message, messageContent }) {
       const botMessage = await message.reply(thinkingMessages[0]);
       await startTyping();
       await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
-    } else if (modelName === 'gemini-pro') {
+    } else if (modelName === process.env.GOOGLE_MODEL_NAME) {
       // Use Google Generative AI
-      const model = await genAI.getGenerativeModel({ model: modelName });
+      const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
       const chat = model.startChat({
         history: conversationManager.getGoogleHistory(message.author.id),
         safetySettings: config.safetySettings,

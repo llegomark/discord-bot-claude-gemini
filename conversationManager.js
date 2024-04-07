@@ -75,7 +75,7 @@ class ConversationManager {
 
       // Send the clear command message after every bot message
       const clearCommandMessage = `
-        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions.*
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
       `;
       await botMessage.channel.send(clearCommandMessage);
     } catch (error) {

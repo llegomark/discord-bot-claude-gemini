@@ -18,10 +18,10 @@ const commands = [
         .setDescription('The name of the model.')
         .setRequired(true)
         .addChoices(
-          { name: 'claude-3-opus-20240229', value: 'claude-3-opus-20240229' },
-          { name: 'claude-3-sonnet-20240229', value: 'claude-3-sonnet-20240229' },
-          { name: 'claude-3-haiku-20240307', value: 'claude-3-haiku-20240307' },
-          { name: 'gemini-pro', value: 'gemini-pro' }
+          { name: 'Claude 3 Opus', value: 'claude-3-opus-20240229' },
+          { name: 'Claude 3 Sonnet', value: 'claude-3-sonnet-20240229' },
+          { name: 'Claude 3 Haiku', value: 'claude-3-haiku-20240307' },
+          { name: 'Google Gemini 1.0 Pro', value: process.env.GOOGLE_MODEL_NAME }
         )
     )
     .setDMPermission(false),
@@ -36,7 +36,7 @@ const commands = [
           { name: 'neko cat', value: 'neko_cat' },
           { name: 'act as a JavaScript Developer', value: 'javascript_developer' },
           { name: 'act as a Python Developer', value: 'python_developer' },
-          { name: 'act as a Helpful Assistant', value: 'helpful_assistant' }
+          { name: 'act as a Helpful Assistant', value: 'helpful_assistant' },
         )
     )
     .setDMPermission(false),

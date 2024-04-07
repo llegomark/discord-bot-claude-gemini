@@ -71,7 +71,7 @@ class CommandHandler {
     conversationManager.setUserPreferences(interaction.user.id, { model });
     await interaction.followUp(`> \`The model has been set to ${model}.\``);
   }
-  
+
   async promptCommand(interaction, conversationManager) {
     const promptName = interaction.options.getString('name');
     const prompt = this.getPrompt(promptName);
