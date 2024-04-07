@@ -50,7 +50,6 @@ class ConversationManager {
     const userId = originalMessage.author.id;
     try {
       let finalResponse;
-
       if (typeof response === 'function') {
         // Google AI response
         const messageResult = await response();
@@ -62,20 +61,18 @@ class ConversationManager {
         // Anthropic response
         finalResponse = response.content[0].text;
       }
-
       // Split the response into chunks of 2000 characters or less
       const chunks = this.splitResponse(finalResponse);
-
       // Send each chunk as a separate message
       for (const chunk of chunks) {
         await botMessage.channel.send(chunk);
       }
-
       this.updateChatHistory(userId, originalMessage.content, finalResponse);
-
       // Send the clear command message after every bot message
+      const userPreferences = this.getUserPreferences(userId);
+      const modelName = userPreferences.model;
       const clearCommandMessage = `
-        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+        > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
       `;
       await botMessage.channel.send(clearCommandMessage);
     } catch (error) {
