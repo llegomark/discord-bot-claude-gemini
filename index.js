@@ -176,6 +176,21 @@ client.on(Events.MessageCreate, async (message) => {
         return;
       }
       conversationQueue.push({ message, messageContent });
+    } else {
+      // Check if the bot has permission to send messages in the channel
+      const botPermissions = message.channel.permissionsFor(client.user);
+      if (!botPermissions.has('SendMessages')) {
+        // Send a DM to the user who installed the bot
+        const owner = message.guild.members.cache.get(message.guild.ownerId);
+        if (owner) {
+          const dmMessage = `Hello! Thank you for installing the Neko Discord Bot. It seems that the bot doesn't have permission to send messages in the channel where it was installed. If you'd like to activate the bot on your channel, please contact @markllego, the owner/creator of the bot, to request channel activation. Thank you!`;
+          try {
+            await owner.send(dmMessage);
+          } catch (error) {
+            console.error('Failed to send DM to the server owner:', error);
+          }
+        }
+      }
     }
   } catch (error) {
     await errorHandler.handleError(error, message);
