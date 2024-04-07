@@ -12,6 +12,7 @@ const port = process.env.PORT || 4000;
 const { helpCommand } = require('./helpCommand');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { config } = require('./config');
+const { ErrorHandler } = require('./errorHandler');
 
 app.get('/', (_req, res) => {
   res.send('Neko Discord Bot is running!');
@@ -35,6 +36,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const conversationManager = new ConversationManager();
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
+const errorHandler = new ErrorHandler();
 
 const activities = [
   { name: 'Chasing virtual mice 🐭', type: ActivityType.Playing },
@@ -94,8 +96,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       await helpCommand(interaction);
     } catch (error) {
-      console.error('Error handling /help command:', error);
-      await interaction.reply('Sorry, something went wrong while displaying the help message.');
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -106,16 +107,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       conversationManager.clearHistory(interaction.user.id);
       await interaction.editReply('Your conversation history has been cleared.');
     } catch (error) {
-      console.error('Error handling /clear command:', error);
-      try {
-        if (interaction.deferred) {
-          await interaction.editReply('Sorry, something went wrong while clearing your conversation history.');
-        } else {
-          await interaction.reply('Sorry, something went wrong while clearing your conversation history.');
-        }
-      } catch (replyError) {
-        console.error('Error sending error message:', replyError);
-      }
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -126,16 +118,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await commandHandler.saveCommand(interaction, conversationManager);
       await interaction.editReply('The conversation has been saved and sent to your inbox.');
     } catch (error) {
-      console.error('Error handling /save command:', error);
-      try {
-        if (interaction.deferred) {
-          await interaction.editReply('Sorry, something went wrong while saving your conversation.');
-        } else {
-          await interaction.reply('Sorry, something went wrong while saving your conversation.');
-        }
-      } catch (replyError) {
-        console.error('Error sending error message:', replyError);
-      }
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -146,16 +129,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await commandHandler.modelCommand(interaction, conversationManager);
       await interaction.editReply(`The model has been set to ${interaction.options.getString('name')}.`);
     } catch (error) {
-      console.error('Error handling /model command:', error);
-      try {
-        if (interaction.deferred) {
-          await interaction.editReply('Sorry, something went wrong while setting the model.');
-        } else {
-          await interaction.reply('Sorry, something went wrong while setting the model.');
-        }
-      } catch (replyError) {
-        console.error('Error sending error message:', replyError);
-      }
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -166,13 +140,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       await commandHandler.promptCommand(interaction, conversationManager);
       await interaction.editReply(`> \`The system prompt has been set to ${interaction.options.getString('name')}.\``);
     } catch (error) {
-      console.error('Error handling /prompt command:', error);
-      try {
-        await interaction.editReply('Sorry, something went wrong while setting the system prompt.');
-      } catch (replyError) {
-        console.error('Error sending error message:', replyError);
-        await interaction.followUp('Sorry, something went wrong while setting the system prompt.');
-      }
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -181,12 +149,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
       await commandHandler.resetCommand(interaction, conversationManager);
     } catch (error) {
-      console.error('Error handling /reset command:', error);
-      try {
-        await interaction.reply('Sorry, something went wrong while resetting your preferences.');
-      } catch (replyError) {
-        console.error('Error sending error message:', replyError);
-      }
+      await errorHandler.handleError(error, interaction);
     }
     return;
   }
@@ -206,8 +169,7 @@ client.on(Events.MessageCreate, async (message) => {
       conversationQueue.push({ message, messageContent });
     }
   } catch (error) {
-    console.error('Error processing the message:', error);
-    await message.reply('Sorry, something went wrong!');
+    await errorHandler.handleError(error, message);
   }
 });
 
@@ -230,7 +192,6 @@ async function processConversation({ message, messageContent }) {
     const userPreferences = conversationManager.getUserPreferences(message.author.id);
     console.log(`User preferences for user ${message.author.id}:`, userPreferences);
     const modelName = userPreferences.model;
-
     if (modelName.startsWith('claude')) {
       // Use Anthropic API (Claude)
       const systemPrompt = commandHandler.getPrompt(userPreferences.prompt);
@@ -293,22 +254,24 @@ async function processConversation({ message, messageContent }) {
       await startTyping();
       await conversationManager.handleModelResponse(botMessage, () => chat.sendMessageStream(messageContent), message, stopTyping);
     }
-
     // Check if it's a new conversation or the bot is mentioned
     if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
       const clearCommandMessage = `
-        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+        > *Hello! If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions.*
       `;
       await message.channel.send(clearCommandMessage);
     }
   } catch (error) {
-    console.error('Error processing the conversation:', error);
-    if (error.status === 429) {
-      await message.reply('Meow, I\'m a bit overloaded right now. Please try again later! 😿');
-    } else {
-      await message.reply('Sorry, something went wrong!');
-    }
+    await errorHandler.handleError(error, message);
   }
 }
+
+process.on('unhandledRejection', (error) => {
+  errorHandler.handleUnhandledRejection(error);
+});
+
+process.on('uncaughtException', (error) => {
+  errorHandler.handleUncaughtException(error);
+});
 
 client.login(process.env.DISCORD_BOT_TOKEN);
