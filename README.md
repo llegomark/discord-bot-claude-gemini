@@ -129,6 +129,22 @@ This guide will walk you through the process of setting up and running the Neko 
 - Make sure to keep your API keys and bot token secure. Do not share them publicly.
 - Refer to the [Discord.js documentation](https://discord.js.org/docs/packages/discord.js/14.14.1), [Anthropic API documentation](https://docs.anthropic.com/claude/docs/intro-to-claude), and [Google Gemini API documentation](https://ai.google.dev/docs) for more information on the available features and options.
 
+## Frequently Asked Questions (FAQ)
+
+**Q: Do you have plans to integrate the OpenAI API?**
+
+A: No, I currently have no plans to integrate the OpenAI API. The responses from Claude and Gemini are excellent for my use case, and I've been very satisfied with their performance since the release of Claude 3.
+
+**Q: What about Gemini 1.5 Pro API?**
+
+A: I already have access to the Google Gemini 1.5 Pro model, and I plan to integrate it into the Discord bot as soon as the API access becomes publicly available and exits the beta stage.
+
+**Q: How can I host this Discord bot?**
+
+A: The README file provides a comprehensive setup guide for hosting the bot on your own server. If you require assistance with installation and setup, I offer bot hosting services for a small fee. Please contact me directly for more information.
+
+**Note:** These are some of the frequently asked questions I receive via Discord. If you have any other questions or need further clarification, feel free to reach out to me directly.
+
 ## Contributing
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
