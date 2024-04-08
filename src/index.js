@@ -106,7 +106,7 @@ async function processConversation({ message, messageContent }) {
 		const modelName = userPreferences.model;
 		if (modelName.startsWith('claude')) {
 			// Use Anthropic API (Claude)
-			const systemPrompt = commandHandler.getPrompt(userPreferences.prompt);
+			const systemPrompt = config.getPrompt(userPreferences.prompt);
 			console.log(`System prompt for user ${message.author.id}:`, systemPrompt);
 			const response = await anthropicLimiter.schedule(() =>
 				anthropic.messages.create({
