@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { Client, GatewayIntentBits, Events } = require('discord.js');
+const { Client, GatewayIntentBits } = require('discord.js');
 const { Anthropic } = require('@anthropic-ai/sdk');
 const { ConversationManager } = require('./conversationManager');
 const { CommandHandler } = require('./commandHandler');
@@ -9,11 +9,11 @@ const rateLimit = require('express-rate-limit');
 const Bottleneck = require('bottleneck');
 const app = express();
 const port = process.env.PORT || 4000;
-const { helpCommand } = require('./helpCommand');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { config } = require('./config');
 const { ErrorHandler } = require('./errorHandler');
-
+const { onInteractionCreate } = require('./interactionCreateHandler');
+const { onMessageCreate } = require('./messageCreateHandler');
 let activityIndex = 0;
 
 app.get('/', (_req, res) => {
@@ -32,7 +32,9 @@ const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,
 	baseURL: process.env.CLOUDFLARE_AI_GATEWAY_URL,
 });
+
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
 const conversationManager = new ConversationManager();
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
@@ -62,7 +64,7 @@ const googleLimiter = new Bottleneck({
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
 
-client.once(Events.ClientReady, () => {
+client.once('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 	// Set the initial status
 	client.user.setPresence({
@@ -79,104 +81,12 @@ client.once(Events.ClientReady, () => {
 	}, 30000);
 });
 
-client.on(Events.InteractionCreate, async (interaction) => {
-	if (!interaction.isCommand()) return;
-
-	if (interaction.commandName === 'help') {
-		try {
-			await helpCommand(interaction);
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'clear') {
-		try {
-			await interaction.deferReply();
-			conversationManager.clearHistory(interaction.user.id);
-			await interaction.editReply('Your conversation history has been cleared.');
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'save') {
-		try {
-			await interaction.deferReply();
-			await commandHandler.saveCommand(interaction, conversationManager);
-			await interaction.editReply('The conversation has been saved and sent to your inbox.');
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'model') {
-		try {
-			await interaction.deferReply();
-			await commandHandler.modelCommand(interaction, conversationManager);
-			await interaction.editReply(`The model has been set to ${interaction.options.getString('name')}.`);
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'prompt') {
-		try {
-			await interaction.deferReply();
-			await commandHandler.promptCommand(interaction, conversationManager);
-			await interaction.editReply(`> \`The system prompt has been set to ${interaction.options.getString('name')}.\``);
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'reset') {
-		try {
-			await commandHandler.resetCommand(interaction, conversationManager);
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
-
-	if (interaction.commandName === 'testerror') {
-		try {
-			await interaction.deferReply();
-			// Check if the user executing the command is the bot owner
-			if (interaction.user.id !== process.env.DISCORD_USER_ID) {
-				await interaction.editReply('Only the bot owner can use this command.');
-				return;
-			}
-			// Trigger a test error
-			throw new Error('This is a test error triggered by the /testerror command.');
-		} catch (error) {
-			await errorHandler.handleError(error, interaction);
-		}
-		return;
-	}
+client.on('interactionCreate', async (interaction) => {
+	await onInteractionCreate(interaction, conversationManager, commandHandler, errorHandler);
 });
 
-client.on(Events.MessageCreate, async (message) => {
-	try {
-		if (message.author.bot) return;
-		const allowedChannelIds = process.env.ALLOWED_CHANNEL_IDS.split(',');
-		const isAllowedChannel = allowedChannelIds.includes(message.channel.id);
-		if (isAllowedChannel) {
-			const messageContent = message.content.trim();
-			if (messageContent === '') {
-				await message.reply("> `It looks like you didn't say anything. What would you like to talk about?`");
-				return;
-			}
-			conversationQueue.push({ message, messageContent });
-		}
-	} catch (error) {
-		await errorHandler.handleError(error, message);
-	}
+client.on('messageCreate', async (message) => {
+	await onMessageCreate(message, conversationQueue, errorHandler);
 });
 
 async function processConversation({ message, messageContent }) {

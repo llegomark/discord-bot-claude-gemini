@@ -2,6 +2,14 @@ require('dotenv').config();
 const { WebhookClient } = require('discord.js');
 
 class ErrorHandler {
+	constructor() {
+		this.errorNotificationThrottle = {
+			window: 60 * 1000, // 1 minute
+			maxNotifications: 5, // Maximum notifications allowed within the window
+			recentNotifications: [], // Array to store recent notification timestamps
+		};
+	}
+
 	async handleError(error, interaction) {
 		console.error('Error processing the interaction:', error);
 
@@ -117,6 +125,17 @@ class ErrorHandler {
 	async sendErrorNotification(errorDetails) {
 		const webhookUrl = process.env.ERROR_NOTIFICATION_WEBHOOK;
 		if (webhookUrl) {
+			const currentTime = Date.now();
+			const { window, maxNotifications, recentNotifications } = this.errorNotificationThrottle;
+
+			// Remove old notification timestamps outside the current window
+			this.errorNotificationThrottle.recentNotifications = recentNotifications.filter((timestamp) => currentTime - timestamp <= window);
+
+			if (recentNotifications.length >= maxNotifications) {
+				console.warn('Error notification throttled due to high volume.');
+				return;
+			}
+
 			const webhookClient = new WebhookClient({ url: webhookUrl });
 			const errorMessage = `An error occurred:\n\`\`\`json\n${JSON.stringify(errorDetails, null, 2)}\n\`\`\``;
 			try {
@@ -125,6 +144,7 @@ class ErrorHandler {
 					username: 'Error Notification',
 				});
 				console.log('Error notification sent via Discord webhook.');
+				this.errorNotificationThrottle.recentNotifications.push(currentTime);
 			} catch (err) {
 				console.error('Failed to send error notification via Discord webhook:', err);
 			}
