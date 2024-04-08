@@ -6,6 +6,7 @@ class ConversationManager {
 			model: 'claude-3-haiku-20240307',
 			prompt: 'helpful_assistant',
 		};
+		this.lastInteractionTimestamps = {};
 	}
 
 	getHistory(userId) {
@@ -32,6 +33,7 @@ class ConversationManager {
 		}
 		this.chatHistories[userId].push(userMessage);
 		this.chatHistories[userId].push(modelResponse);
+		this.lastInteractionTimestamps[userId] = Date.now();
 	}
 
 	clearHistory(userId) {
@@ -120,6 +122,16 @@ class ConversationManager {
 			...preferences,
 		};
 		console.log(`Updated user preferences for user ${userId}:`, this.userPreferences[userId]);
+	}
+
+	clearInactiveConversations(inactivityDuration) {
+		const currentTime = Date.now();
+		for (const userId in this.lastInteractionTimestamps) {
+			if (currentTime - this.lastInteractionTimestamps[userId] > inactivityDuration) {
+				delete this.chatHistories[userId];
+				delete this.lastInteractionTimestamps[userId];
+			}
+		}
 	}
 }
 

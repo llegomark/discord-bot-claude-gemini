@@ -160,6 +160,12 @@ async function processConversation({ message, messageContent }) {
 	}
 }
 
+const inactivityDuration = process.env.CONVERSATION_INACTIVITY_DURATION || 3 * 60 * 60 * 1000; // Default: 3 hours
+
+setInterval(() => {
+	conversationManager.clearInactiveConversations(inactivityDuration);
+}, inactivityDuration);
+
 process.on('unhandledRejection', (error) => {
 	errorHandler.handleUnhandledRejection(error);
 });
