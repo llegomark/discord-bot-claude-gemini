@@ -35,6 +35,10 @@ This project is under active development, and I may introduce breaking changes o
 ![Screenshot](screenshots/Screenshot5.png)
 ![Screenshot](screenshots/Screenshot6.png)
 ![Screenshot](screenshots/Screenshot7.png)
+![Screenshot](screenshots/Screenshot8.png)
+![Screenshot](screenshots/Screenshot9.png)
+![Screenshot](screenshots/Screenshot10.png)
+![Screenshot](screenshots/Screenshot11.png)
 
 ## Discord Bot Setup Guide
 
