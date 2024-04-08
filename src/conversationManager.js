@@ -87,9 +87,30 @@ class ConversationManager {
 			console.error(error.message);
 			if (error.status === 429) {
 				await botMessage.edit(`<@${originalMessage.author.id}>, Meow, I'm a bit overloaded right now. Please try again later! 😿`);
+			} else if (error.status === 400) {
+				await botMessage.edit(
+					`<@${originalMessage.author.id}>, Oops, there was an issue with the format or content of the request. Please try again.`,
+				);
+			} else if (error.status === 401) {
+				await botMessage.edit(
+					`<@${originalMessage.author.id}>, Uh-oh, there seems to be an issue with the API key. Please contact the bot owner.`,
+				);
+			} else if (error.status === 403) {
+				await botMessage.edit(`<@${originalMessage.author.id}>, Sorry, the API key doesn't have permission to use the requested resource.`);
+			} else if (error.status === 404) {
+				await botMessage.edit(
+					`<@${originalMessage.author.id}>, The requested resource was not found. Please check your request and try again.`,
+				);
+			} else if (error.status === 500) {
+				await botMessage.edit(`<@${originalMessage.author.id}>, An unexpected error occurred on Anthropic's end. Please try again later.`);
+			} else if (error.status === 529) {
+				await botMessage.edit(`<@${originalMessage.author.id}>, Anthropic's API is temporarily overloaded. Please try again later.`);
 			} else {
 				await botMessage.edit(`<@${originalMessage.author.id}>, Sorry, I couldn't generate a response.`);
 			}
+
+			// Send the error to the ErrorHandler for notification
+			await errorHandler.handleError(error, originalMessage);
 		} finally {
 			stopTyping();
 		}

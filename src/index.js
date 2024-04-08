@@ -156,7 +156,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			throw new Error('This is a test error triggered by the /testerror command.');
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
-			await interaction.editReply('A test error has been triggered. Check the error notification channel for details.');
 		}
 		return;
 	}

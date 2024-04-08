@@ -4,11 +4,17 @@ const { WebhookClient } = require('discord.js');
 class ErrorHandler {
 	async handleError(error, interaction) {
 		console.error('Error processing the interaction:', error);
-		if (error.message === 'This is a test error triggered by the /testerror command.') {
-			await interaction.editReply('Test error triggered successfully. Check the error notification channel for details.');
+
+		if (interaction.commandName === 'testerror') {
+			if (error.message === 'This is a test error triggered by the /testerror command.') {
+				await interaction.editReply('Test error triggered successfully. Check the error notification channel for details.');
+			} else {
+				await interaction.editReply('An unexpected error occurred while processing the /testerror command.');
+			}
 		} else {
 			await interaction.reply('Sorry, something went wrong! Our team has been notified and will look into the issue.');
 		}
+
 		// Log error details for debugging
 		const errorDetails = {
 			message: error.message,
@@ -19,6 +25,7 @@ class ErrorHandler {
 			environment: process.env.NODE_ENV,
 		};
 		console.error('Error details:', errorDetails);
+
 		// Send error notification via Discord webhook
 		await this.sendErrorNotification(errorDetails);
 	}
