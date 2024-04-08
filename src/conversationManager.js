@@ -1,9 +1,11 @@
+require('dotenv').config();
+
 class ConversationManager {
 	constructor() {
 		this.chatHistories = {};
 		this.userPreferences = {};
 		this.defaultPreferences = {
-			model: 'claude-3-haiku-20240307',
+			model: process.env.GOOGLE_MODEL_NAME,
 			prompt: 'helpful_assistant',
 		};
 		this.lastInteractionTimestamps = {};

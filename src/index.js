@@ -7,22 +7,16 @@ const { CommandHandler } = require('./commandHandler');
 const async = require('async');
 const rateLimit = require('express-rate-limit');
 const Bottleneck = require('bottleneck');
-const app = express();
-const port = process.env.PORT || 4000;
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { config } = require('./config');
 const { ErrorHandler } = require('./errorHandler');
 const { onInteractionCreate } = require('./interactionCreateHandler');
 const { onMessageCreate } = require('./messageCreateHandler');
+
 let activityIndex = 0;
 
-app.get('/', (_req, res) => {
-	res.send('Neko Discord Bot is running!');
-});
-
-app.listen(port, () => {
-	console.log(`Neko Discord Bot is listening on port ${port}`);
-});
+const app = express();
+const port = process.env.PORT || 4000;
 
 const client = new Client({
 	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
@@ -64,6 +58,7 @@ const googleLimiter = new Bottleneck({
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
 
+// Discord bot event listeners
 client.once('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 	// Set the initial status
@@ -89,6 +84,7 @@ client.on('messageCreate', async (message) => {
 	await onMessageCreate(message, conversationQueue, errorHandler);
 });
 
+// Conversation processing function
 async function processConversation({ message, messageContent }) {
 	try {
 		const typingInterval = 1000;
@@ -160,12 +156,13 @@ async function processConversation({ message, messageContent }) {
 	}
 }
 
+// Clear inactive conversations interval
 const inactivityDuration = process.env.CONVERSATION_INACTIVITY_DURATION || 3 * 60 * 60 * 1000; // Default: 3 hours
-
 setInterval(() => {
 	conversationManager.clearInactiveConversations(inactivityDuration);
 }, inactivityDuration);
 
+// Error handling
 process.on('unhandledRejection', (error) => {
 	errorHandler.handleUnhandledRejection(error);
 });
@@ -174,4 +171,14 @@ process.on('uncaughtException', (error) => {
 	errorHandler.handleUncaughtException(error);
 });
 
+// Express app setup and server startup
+app.get('/', (_req, res) => {
+	res.send('Neko Discord Bot is running!');
+});
+
+app.listen(port, () => {
+	console.log(`Neko Discord Bot is listening on port ${port}`);
+});
+
+// Start the Discord bot
 client.login(process.env.DISCORD_BOT_TOKEN);

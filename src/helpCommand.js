@@ -14,8 +14,7 @@ async function helpCommand(interaction) {
 			{ name: '/help', value: 'Displays this help message.' },
 			{
 				name: 'Installation & Activation',
-				value:
-					'To install and activate the Discord bot on your server, please DM [markllego](https://discord.com/users/1012984419029622784) on either Discord or [Twitter](https://twitter.com/markllego).',
+				value: `To install and activate the Discord bot on your server, please DM [markllego](https://discord.com/users/1012984419029622784) on either Discord or [Twitter](https://twitter.com/markllego).`,
 			},
 		)
 		.setTimestamp();
