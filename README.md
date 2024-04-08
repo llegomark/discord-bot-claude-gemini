@@ -96,20 +96,20 @@ This guide will walk you through the process of setting up and running the Neko 
 
    - You can obtain your Discord bot token from the [Discord Developer Portal](https://discord.com/developers/docs/intro).
    - The Anthropic API key can be obtained from the [Anthropic Console](https://console.anthropic.com/).
-   - The Google API key can be obtained from the [Google Cloud Console](https://aistudio.google.com/app/).
+   - The Google API key can be obtained from the [Google AI Studio](https://aistudio.google.com/app/).
 
 4. **Deploy Slash Commands:**
 
    - Run the following command to deploy the slash commands to your Discord server:
 
    ```bash
-   node deploy-commands.js
+   node src/deploy-commands.js
    ```
 
 5. **Start the Bot:**
    - In the terminal, run the following command to start the bot:
    ```bash
-   node index.js
+   node src/index.js
    ```
    - The bot will connect to Discord and be ready to interact with users.
 
