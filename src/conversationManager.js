@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 class ConversationManager {
-	constructor() {
+	constructor(errorHandler) {
 		this.chatHistories = {};
 		this.userPreferences = {};
 		this.defaultPreferences = {
@@ -9,6 +9,7 @@ class ConversationManager {
 			prompt: 'helpful_assistant',
 		};
 		this.lastInteractionTimestamps = {};
+		this.errorHandler = errorHandler;
 	}
 
 	getHistory(userId) {
@@ -88,7 +89,7 @@ class ConversationManager {
 				await botMessage.channel.send(clearCommandMessage);
 			}
 		} catch (error) {
-			await errorHandler.handleModelResponseError(error, botMessage, originalMessage);
+			await this.errorHandler.handleError(error, originalMessage);
 		} finally {
 			stopTyping();
 		}

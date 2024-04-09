@@ -28,11 +28,10 @@ const anthropic = new Anthropic({
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-
-const conversationManager = new ConversationManager();
+const errorHandler = new ErrorHandler();
+const conversationManager = new ConversationManager(errorHandler);
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
-const errorHandler = new ErrorHandler();
 
 // Create a rate limiter middleware
 const limiter = rateLimit({
@@ -125,13 +124,16 @@ async function processConversation({ message, messageContent }) {
 			// Select the first message from the shuffled array
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
 			await startTyping();
-			await conversationManager.handleModelResponse(botMessage, response, message, stopTyping);
+			await conversationManager.handleModelResponse(botMessage, response, message, stopTyping, errorHandler);
 		} else if (modelName === process.env.GOOGLE_MODEL_NAME) {
 			// Use Google Generative AI
 			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
+			const userPreferences = conversationManager.getUserPreferences(message.author.id);
+			const systemInstruction = config.getPrompt(userPreferences.prompt);
 			const chat = model.startChat({
 				history: conversationManager.getGoogleHistory(message.author.id),
 				safetySettings: config.safetySettings,
+				systemInstruction: systemInstruction,
 			});
 			// Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
 			const shuffledThinkingMessages = [...config.thinkingMessages];

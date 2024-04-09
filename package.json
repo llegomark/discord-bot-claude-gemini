@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"@anthropic-ai/sdk": "^0.20.1",
+		"@anthropic-ai/sdk": "^0.20.2",
 		"@google/generative-ai": "^0.5.0",
 		"async": "^3.2.5",
 		"bottleneck": "^2.19.5",
