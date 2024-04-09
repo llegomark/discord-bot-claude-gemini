@@ -12,15 +12,23 @@ class ErrorHandler {
 
 	async handleError(error, interaction) {
 		console.error('Error processing the interaction:', error);
-
 		if (interaction.commandName === 'testerror') {
 			if (error.message === 'This is a test error triggered by the /testerror command.') {
-				await interaction.editReply('Test error triggered successfully. Check the error notification channel for details.');
+				await interaction.editReply({
+					content: 'Test error triggered successfully. Check the error notification channel for details.',
+					ephemeral: true,
+				});
 			} else {
-				await interaction.editReply('An unexpected error occurred while processing the /testerror command.');
+				await interaction.editReply({
+					content: 'An unexpected error occurred while processing the /testerror command.',
+					ephemeral: true,
+				});
 			}
 		} else {
-			await interaction.reply('Sorry, something went wrong! Our team has been notified and will look into the issue.');
+			await interaction.reply({
+				content: 'Sorry, something went wrong! Our team has been notified and will look into the issue.',
+				ephemeral: true,
+			});
 		}
 
 		// Log error details for debugging

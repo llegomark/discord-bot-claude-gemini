@@ -28,7 +28,7 @@ class CommandHandler {
 
 	async clearCommand(message, args, conversationManager) {
 		conversationManager.clearHistory(message.author.id);
-		await message.reply('> `Your conversation history has been cleared.`');
+		await message.reply('> `Your conversation history has been cleared.`', { ephemeral: true });
 	}
 
 	async saveCommand(interaction, conversationManager) {
@@ -59,7 +59,7 @@ class CommandHandler {
 			for (const [index, chunk] of chunks.entries()) {
 				await interaction.user.send(`Here is your saved conversation (part ${index + 1}):\n\n${chunk}`);
 			}
-			await interaction.followUp('> `The conversation has been saved and sent to your inbox.`');
+			await interaction.followUp('> `The conversation has been saved and sent to your inbox.`', { ephemeral: true });
 		} catch (error) {
 			console.error('Error sending conversation to user:', error);
 			await interaction.followUp('> `Failed to send the conversation to your inbox. Please check your privacy settings.`');
@@ -69,7 +69,7 @@ class CommandHandler {
 	async modelCommand(interaction, conversationManager) {
 		const model = interaction.options.getString('name');
 		conversationManager.setUserPreferences(interaction.user.id, { model });
-		await interaction.followUp(`> \`The model has been set to ${model}.\``);
+		await interaction.followUp(`> \`The model has been set to ${model}.\``, { ephemeral: true });
 	}
 
 	async promptCommand(interaction, conversationManager) {
@@ -77,12 +77,12 @@ class CommandHandler {
 		const prompt = config.getPrompt(promptName);
 		console.log(`Setting prompt for user ${interaction.user.id}: promptName=${promptName}, prompt=${prompt}`);
 		conversationManager.setUserPreferences(interaction.user.id, { prompt: promptName });
-		await interaction.followUp(`> \`The system prompt has been set to ${promptName}.\``);
+		await interaction.followUp(`> \`The system prompt has been set to ${promptName}.\``, { ephemeral: true });
 	}
 
 	async resetCommand(interaction, conversationManager) {
 		conversationManager.resetUserPreferences(interaction.user.id);
-		await interaction.reply('> `Your preferences have been reset to the default settings.`');
+		await interaction.reply('> `Your preferences have been reset to the default settings.`', { ephemeral: true });
 	}
 }
 

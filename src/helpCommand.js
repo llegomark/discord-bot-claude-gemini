@@ -19,7 +19,7 @@ async function helpCommand(interaction) {
 		)
 		.setTimestamp();
 
-	await interaction.reply({ embeds: [helpEmbed] });
+	await interaction.reply({ embeds: [helpEmbed], ephemeral: true });
 }
 
 module.exports = { helpCommand };
