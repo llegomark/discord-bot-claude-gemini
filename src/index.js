@@ -16,6 +16,7 @@ const { onMessageCreate } = require('./messageCreateHandler');
 let activityIndex = 0;
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 4000;
 
 const client = new Client({
@@ -40,6 +41,7 @@ const limiter = rateLimit({
 	message: 'Too many requests, please try again later.',
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+	proxy: true,
 });
 
 // Apply the rate limiter middleware to the Express app
