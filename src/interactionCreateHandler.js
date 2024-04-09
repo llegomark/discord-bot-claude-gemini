@@ -14,9 +14,8 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'clear') {
 		try {
-			await interaction.deferReply();
-			conversationManager.clearHistory(interaction.user.id);
-			await interaction.editReply('Your conversation history has been cleared.');
+			await interaction.deferReply({ ephemeral: true });
+			await commandHandler.clearCommand(interaction, conversationManager);
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
 		}
@@ -25,9 +24,8 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'save') {
 		try {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			await commandHandler.saveCommand(interaction, conversationManager);
-			await interaction.editReply('The conversation has been saved and sent to your inbox.');
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
 		}
@@ -36,9 +34,8 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'model') {
 		try {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			await commandHandler.modelCommand(interaction, conversationManager);
-			await interaction.editReply(`The model has been set to ${interaction.options.getString('name')}.`);
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
 		}
@@ -47,9 +44,8 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'prompt') {
 		try {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			await commandHandler.promptCommand(interaction, conversationManager);
-			await interaction.editReply(`> \`The system prompt has been set to ${interaction.options.getString('name')}.\``);
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
 		}
@@ -58,6 +54,7 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'reset') {
 		try {
+			await interaction.deferReply({ ephemeral: true });
 			await commandHandler.resetCommand(interaction, conversationManager);
 		} catch (error) {
 			await errorHandler.handleError(error, interaction);
@@ -67,7 +64,7 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 
 	if (interaction.commandName === 'testerror') {
 		try {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			// Check if the user executing the command is the bot owner
 			if (interaction.user.id !== process.env.DISCORD_USER_ID) {
 				await interaction.editReply('Only the bot owner can use this command.');
