@@ -82,7 +82,7 @@ client.on('interactionCreate', async (interaction) => {
 	await onInteractionCreate(interaction, conversationManager, commandHandler, errorHandler);
 });
 client.on('messageCreate', async (message) => {
-	await onMessageCreate(message, conversationQueue, errorHandler);
+	await onMessageCreate(message, conversationQueue, errorHandler, conversationManager);
 });
 client.on('guildMemberRemove', async (member) => {
 	const userId = member.user.id;
