@@ -108,9 +108,8 @@ client.on('guildMemberRemove', async (member) => {
 client.on('channelDelete', async (channel) => {
 	const channelId = channel.id;
 	const activeConversations = conversationManager.getActiveConversationsByChannel(channelId);
-	for (const userId of activeConversations) {
-		await conversationManager.stopTyping(userId);
-	}
+	const stopTypingPromises = activeConversations.map((userId) => conversationManager.stopTyping(userId));
+	await Promise.all(stopTypingPromises);
 });
 
 // Conversation processing function

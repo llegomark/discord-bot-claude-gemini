@@ -75,10 +75,11 @@ class ConversationManager {
 			// Split the response into chunks of 2000 characters or less
 			const chunks = this.splitResponse(finalResponse);
 			// Send each chunk as a separate message and update the typing indicator between each chunk
-			for (const chunk of chunks) {
+			const chunkPromises = chunks.map(async (chunk) => {
 				await botMessage.channel.sendTyping();
 				await botMessage.channel.send(chunk);
-			}
+			});
+			await Promise.all(chunkPromises);
 			this.updateChatHistory(userId, originalMessage.content, finalResponse);
 			// Send the clear command message after every bot message
 			const userPreferences = this.getUserPreferences(userId);
@@ -154,7 +155,7 @@ class ConversationManager {
 	}
 
 	isActiveConversation(userId) {
-		return this.chatHistories.hasOwnProperty(userId);
+		return Object.prototype.hasOwnProperty.call(this.chatHistories, userId);
 	}
 
 	getActiveConversationsByChannel(channelId) {
