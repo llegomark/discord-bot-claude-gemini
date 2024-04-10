@@ -153,10 +153,7 @@ async function processConversation({ message, messageContent }) {
 			const genAIIndex = message.id % genAIInstances.length;
 			const genAI = genAIInstances[genAIIndex];
 			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
-
-			const userPreferences = conversationManager.getUserPreferences(message.author.id);
 			const systemInstruction = config.getPrompt(userPreferences.prompt);
-
 			const chat = model.startChat({
 				history: conversationManager.getGoogleHistory(message.author.id),
 				safetySettings: config.safetySettings,
