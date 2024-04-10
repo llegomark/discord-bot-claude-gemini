@@ -1,4 +1,5 @@
 const { config } = require('./config');
+const { EmbedBuilder } = require('discord.js');
 
 class CommandHandler {
 	constructor() {
@@ -8,6 +9,7 @@ class CommandHandler {
 			model: this.modelCommand,
 			prompt: this.promptCommand,
 			reset: this.resetCommand,
+			settings: this.settingsCommand,
 		};
 	}
 
@@ -83,6 +85,37 @@ class CommandHandler {
 	async resetCommand(interaction, conversationManager) {
 		conversationManager.resetUserPreferences(interaction.user.id);
 		await interaction.editReply('> `Your preferences have been reset to the default settings.`');
+	}
+
+	async settingsCommand(interaction, conversationManager) {
+		const userId = interaction.user.id;
+		const userPreferences = conversationManager.getUserPreferences(userId);
+		const model = userPreferences.model;
+		const promptName = userPreferences.prompt;
+		const prompt = config.getPrompt(promptName);
+
+		const settingsEmbed = new EmbedBuilder().setColor('#0099ff').setTitle('Current Settings').addFields({ name: 'Model', value: model });
+
+		const maxFieldLength = 1024;
+		const promptFields = [];
+		let currentField = '';
+
+		prompt.split('\n').forEach((line) => {
+			if (currentField.length + line.length + 1 <= maxFieldLength) {
+				currentField += (currentField ? '\n' : '') + line;
+			} else {
+				promptFields.push({ name: 'Prompt', value: currentField });
+				currentField = line;
+			}
+		});
+
+		if (currentField) {
+			promptFields.push({ name: 'Prompt', value: currentField });
+		}
+
+		settingsEmbed.addFields(...promptFields).setTimestamp();
+
+		await interaction.editReply({ embeds: [settingsEmbed], ephemeral: true });
 	}
 }
 
