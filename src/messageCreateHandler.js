@@ -1,3 +1,5 @@
+const { config } = require('./config');
+
 async function onMessageCreate(message, conversationQueue, errorHandler, conversationManager) {
 	try {
 		if (message.author.bot) return;
@@ -10,18 +12,7 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 				return;
 			}
 			if (conversationManager.isNewConversation(message.author.id)) {
-				const privacyNotice = `
-                    ||\u200B||
-                    :warning: **Please be aware that your conversations with me in this channel are public and visible to anyone who can access this channel.** :warning:
-                    ||\u200B||
-                    If you prefer to have a private conversation, please note that I do not respond to direct messages or private conversations. All interactions with me should take place in the designated channels where I am installed.
-                    ||\u200B||
-                    By continuing this conversation, you acknowledge that your messages and my responses will be visible to others in this channel. If you have any sensitive or personal information, please refrain from sharing it here.
-                    ||\u200B||
-                    If you have any concerns or questions about the privacy of our interactions, please contact the server administrators.
-                    ||\u200B||
-                `;
-				await message.channel.send({ content: privacyNotice });
+				await message.channel.send({ content: config.messages.privacyNotice });
 			}
 			conversationQueue.push({ message, messageContent });
 		}

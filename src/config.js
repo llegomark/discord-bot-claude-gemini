@@ -152,6 +152,23 @@ module.exports.config = {
 		No Personal Experiences: As a language model, you do not have personal experiences or emotions.
 		Inability to Perform Actions in the Real World: You are a text-based AI and cannot perform actions in the real world such as driving, eating, or having close relationships.`,
 	},
+	messages: {
+		clearCommand:
+			"> *Hello! You are currently using the `{modelName}` model. If you'd like to start a new conversation, please use the `/clear` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type `/help` command.*",
+		newConversation:
+			"> *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the `/clear` command.*",
+		privacyNotice: `
+						||\u200B||
+						:warning: **Please be aware that your conversations with me in this channel are public and visible to anyone who can access this channel.** :warning:
+						||\u200B||
+						If you prefer to have a private conversation, please note that I do not respond to direct messages or private conversations. All interactions with me should take place in the designated channels where I am installed.
+						||\u200B||
+						By continuing this conversation, you acknowledge that your messages and my responses will be visible to others in this channel. If you have any sensitive or personal information, please refrain from sharing it here.
+						||\u200B||
+						If you have any concerns or questions about the privacy of our interactions, please contact the server administrators.
+						||\u200B||
+					`,
+	},
 	getPrompt: function (promptName) {
 		return this.prompts[promptName] || '';
 	},
