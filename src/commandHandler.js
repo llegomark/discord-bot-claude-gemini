@@ -68,7 +68,7 @@ class CommandHandler {
 
 	async modelCommand(interaction, conversationManager) {
 		const model = interaction.options.getString('name');
-		conversationManager.setUserPreferences(interaction.user.id, { model });
+		await conversationManager.setUserPreferences(interaction.user.id, { model });
 		await interaction.editReply(`> \`The model has been set to ${model}.\``);
 	}
 
@@ -76,12 +76,12 @@ class CommandHandler {
 		const promptName = interaction.options.getString('name');
 		const prompt = config.getPrompt(promptName);
 		console.log(`Setting prompt for user ${interaction.user.id}: promptName=${promptName}, prompt=${prompt}`);
-		conversationManager.setUserPreferences(interaction.user.id, { prompt: promptName });
+		await conversationManager.setUserPreferences(interaction.user.id, { prompt: promptName });
 		await interaction.editReply(`> \`The system prompt has been set to ${promptName}.\``);
 	}
 
 	async resetCommand(interaction, conversationManager) {
-		conversationManager.resetUserPreferences(interaction.user.id);
+		await conversationManager.resetUserPreferences(interaction.user.id);
 		await interaction.editReply('> `Your preferences have been reset to the default settings.`');
 	}
 }

@@ -102,9 +102,9 @@ async function processConversation({ message, messageContent }) {
 		};
 		// Start the typing indicator instantly
 		message.channel.sendTyping();
-		const userPreferences = conversationManager.getUserPreferences(message.author.id);
+		const userPreferences = await conversationManager.getUserPreferences(message.author.id);
 		console.log(`User preferences for user ${message.author.id}:`, userPreferences);
-		const modelName = userPreferences.model;
+		const modelName = userPreferences?.model || process.env.GOOGLE_MODEL_NAME;
 		if (modelName.startsWith('claude')) {
 			// Use Anthropic API (Claude)
 			const systemPrompt = config.getPrompt(userPreferences.prompt);
@@ -130,7 +130,7 @@ async function processConversation({ message, messageContent }) {
 		} else if (modelName === process.env.GOOGLE_MODEL_NAME) {
 			// Use Google Generative AI
 			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
-			const userPreferences = conversationManager.getUserPreferences(message.author.id);
+			const userPreferences = await conversationManager.getUserPreferences(message.author.id);
 			const systemInstruction = config.getPrompt(userPreferences.prompt);
 			const chat = model.startChat({
 				history: conversationManager.getGoogleHistory(message.author.id),
@@ -147,12 +147,14 @@ async function processConversation({ message, messageContent }) {
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
 			await startTyping();
 			await conversationManager.handleModelResponse(botMessage, () => chat.sendMessageStream(messageContent), message, stopTyping);
+		} else {
+			throw new Error(`Unknown model: ${modelName}`);
 		}
 		// Check if it's a new conversation or the bot is mentioned
 		if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
 			const clearCommandMessage = `
-			  > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
-			`;
+		  > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
+		`;
 			await message.channel.send(clearCommandMessage);
 		}
 	} catch (error) {

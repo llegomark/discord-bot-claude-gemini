@@ -1,4 +1,5 @@
 require('dotenv').config();
+const redisClient = require('./redisClient');
 
 class ConversationManager {
 	constructor(errorHandler) {
@@ -43,12 +44,8 @@ class ConversationManager {
 		delete this.chatHistories[userId];
 	}
 
-	resetUserPreferences(userId) {
-		this.userPreferences[userId] = {
-			model: this.defaultPreferences.model,
-			prompt: this.defaultPreferences.prompt,
-		};
-		console.log(`User preferences reset for user ${userId}:`, this.userPreferences[userId]);
+	async resetUserPreferences(userId) {
+		await redisClient.del(`user:${userId}:preferences`);
 	}
 
 	isNewConversation(userId) {
@@ -79,13 +76,13 @@ class ConversationManager {
 			}
 			this.updateChatHistory(userId, originalMessage.content, finalResponse);
 			// Send the clear command message after every bot message
-			const userPreferences = this.getUserPreferences(userId);
+			const userPreferences = await this.getUserPreferences(userId);
 			const modelName = userPreferences.model;
 			const messageCount = this.chatHistories[userId].length;
 			if (messageCount % 3 === 0) {
 				const clearCommandMessage = `
-				  > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
-				`;
+                  > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+                `;
 				await botMessage.channel.send(clearCommandMessage);
 			}
 		} catch (error) {
@@ -98,7 +95,6 @@ class ConversationManager {
 	splitResponse(response) {
 		const chunks = [];
 		const maxLength = 2000;
-
 		while (response.length > maxLength) {
 			const chunk = response.slice(0, maxLength);
 			const lastSpaceIndex = chunk.lastIndexOf(' ');
@@ -106,25 +102,19 @@ class ConversationManager {
 			chunks.push(response.slice(0, sliceIndex));
 			response = response.slice(sliceIndex).trim();
 		}
-
 		if (response.length > 0) {
 			chunks.push(response);
 		}
-
 		return chunks;
 	}
 
-	getUserPreferences(userId) {
-		console.log(`Getting user preferences for user ${userId}:`, this.userPreferences[userId]);
-		return this.userPreferences[userId] ? { ...this.userPreferences[userId] } : { ...this.defaultPreferences };
+	async getUserPreferences(userId) {
+		const preferences = await redisClient.hgetall(`user:${userId}:preferences`);
+		return preferences ? { ...preferences } : { ...this.defaultPreferences };
 	}
 
-	setUserPreferences(userId, preferences) {
-		this.userPreferences[userId] = {
-			...this.getUserPreferences(userId),
-			...preferences,
-		};
-		console.log(`Updated user preferences for user ${userId}:`, this.userPreferences[userId]);
+	async setUserPreferences(userId, preferences) {
+		await redisClient.hset(`user:${userId}:preferences`, preferences);
 	}
 
 	clearInactiveConversations(inactivityDuration) {
