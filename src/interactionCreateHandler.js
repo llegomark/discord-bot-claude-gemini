@@ -77,6 +77,20 @@ async function onInteractionCreate(interaction, conversationManager, commandHand
 		}
 		return;
 	}
+
+	if (interaction.commandName === 'settings') {
+		try {
+			await interaction.deferReply({ ephemeral: true });
+			await commandHandler.settingsCommand(interaction, conversationManager);
+		} catch (error) {
+			await interaction.editReply({
+				content: 'An error occurred while processing the command.',
+				ephemeral: true,
+			});
+			await errorHandler.handleError(error, interaction);
+		}
+		return;
+	}
 }
 
 module.exports = { onInteractionCreate };

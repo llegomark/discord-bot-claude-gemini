@@ -48,6 +48,7 @@ const commands = [
 		.setName('testerror')
 		.setDescription('Triggers a test error to check the error notification webhook.')
 		.setDMPermission(false),
+	new SlashCommandBuilder().setName('settings').setDescription('Displays your current model and prompt settings.').setDMPermission(false),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
