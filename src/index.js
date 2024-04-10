@@ -31,7 +31,16 @@ const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,
 	baseURL: process.env.CLOUDFLARE_AI_GATEWAY_URL,
 });
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
+const googleApiKeys = [
+	process.env.GOOGLE_API_KEY_1,
+	process.env.GOOGLE_API_KEY_2,
+	process.env.GOOGLE_API_KEY_3,
+	process.env.GOOGLE_API_KEY_4,
+	process.env.GOOGLE_API_KEY_5,
+];
+
+const genAIInstances = googleApiKeys.map((apiKey) => new GoogleGenerativeAI(apiKey));
 
 // Initialize custom classes
 const errorHandler = new ErrorHandler();
@@ -48,10 +57,12 @@ const limiter = rateLimit({
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 	proxy: true,
 });
+
 const anthropicLimiter = new Bottleneck({
 	maxConcurrent: 1,
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
+
 const googleLimiter = new Bottleneck({
 	maxConcurrent: 1,
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
@@ -78,18 +89,22 @@ client.once('ready', () => {
 		});
 	}, 30000);
 });
+
 client.on('interactionCreate', async (interaction) => {
 	await onInteractionCreate(interaction, conversationManager, commandHandler, errorHandler);
 });
+
 client.on('messageCreate', async (message) => {
 	await onMessageCreate(message, conversationQueue, errorHandler, conversationManager);
 });
+
 client.on('guildMemberRemove', async (member) => {
 	const userId = member.user.id;
 	if (conversationManager.isActiveConversation(userId)) {
 		await conversationManager.stopTyping(userId);
 	}
 });
+
 client.on('channelDelete', async (channel) => {
 	const channelId = channel.id;
 	const activeConversations = conversationManager.getActiveConversationsByChannel(channelId);
@@ -103,15 +118,20 @@ async function processConversation({ message, messageContent }) {
 	try {
 		// Start the typing indicator instantly
 		message.channel.sendTyping();
+
 		const userPreferences = conversationManager.getUserPreferences(message.author.id);
 		console.log(`User preferences for user ${message.author.id}:`, userPreferences);
+
 		const modelName = userPreferences.model;
+
 		// Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
 		const shuffledThinkingMessages = shuffleArray(config.thinkingMessages);
+
 		if (modelName.startsWith('claude')) {
 			// Use Anthropic API (Claude)
 			const systemPrompt = config.getPrompt(userPreferences.prompt);
 			console.log(`System prompt for user ${message.author.id}:`, systemPrompt);
+
 			const response = await anthropicLimiter.schedule(() =>
 				anthropic.messages.create({
 					model: modelName,
@@ -120,25 +140,33 @@ async function processConversation({ message, messageContent }) {
 					messages: conversationManager.getHistory(message.author.id).concat([{ role: 'user', content: messageContent }]),
 				}),
 			);
+
 			// Select the first message from the shuffled array
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
 			await conversationManager.startTyping(message.author.id);
+
 			await conversationManager.handleModelResponse(botMessage, response, message, async () => {
 				await conversationManager.stopTyping(message.author.id);
 			});
 		} else if (modelName === process.env.GOOGLE_MODEL_NAME) {
 			// Use Google Generative AI
+			const genAIIndex = message.id % genAIInstances.length;
+			const genAI = genAIInstances[genAIIndex];
 			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
+
 			const userPreferences = conversationManager.getUserPreferences(message.author.id);
 			const systemInstruction = config.getPrompt(userPreferences.prompt);
+
 			const chat = model.startChat({
 				history: conversationManager.getGoogleHistory(message.author.id),
 				safetySettings: config.safetySettings,
 				systemInstruction: systemInstruction,
 			});
+
 			// Select the first message from the shuffled array
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
 			await conversationManager.startTyping(message.author.id);
+
 			await conversationManager.handleModelResponse(
 				botMessage,
 				() => chat.sendMessageStream(messageContent),
@@ -148,11 +176,12 @@ async function processConversation({ message, messageContent }) {
 				},
 			);
 		}
+
 		// Check if it's a new conversation or the bot is mentioned
 		if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
 			const clearCommandMessage = `
-          > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
-        `;
+        > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
+      `;
 			await message.channel.send(clearCommandMessage);
 		}
 	} catch (error) {
@@ -181,6 +210,7 @@ setInterval(() => {
 process.on('unhandledRejection', (error) => {
 	errorHandler.handleUnhandledRejection(error);
 });
+
 process.on('uncaughtException', (error) => {
 	errorHandler.handleUncaughtException(error);
 });
@@ -189,6 +219,7 @@ process.on('uncaughtException', (error) => {
 app.get('/', (_req, res) => {
 	res.send('Neko Discord Bot is running!');
 });
+
 app.listen(port, () => {
 	console.log(`Neko Discord Bot is listening on port ${port}`);
 });
