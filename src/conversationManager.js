@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { config } = require('./config');
 
 class ConversationManager {
 	constructor(errorHandler) {
@@ -84,10 +85,8 @@ class ConversationManager {
 			const modelName = userPreferences.model;
 			const messageCount = this.chatHistories[userId].length;
 			if (messageCount % 3 === 0) {
-				const clearCommandMessage = `
-          > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
-        `;
-				await botMessage.channel.send(clearCommandMessage);
+				const message = config.messages.clearCommand.replace('{modelName}', modelName);
+				await botMessage.channel.send(message);
 			}
 		} catch (error) {
 			await this.errorHandler.handleError(error, originalMessage);
