@@ -10,6 +10,7 @@ class ConversationManager {
 		};
 		this.lastInteractionTimestamps = {};
 		this.errorHandler = errorHandler;
+		this.typingIntervalIds = {};
 	}
 
 	getHistory(userId) {
@@ -84,8 +85,8 @@ class ConversationManager {
 			const messageCount = this.chatHistories[userId].length;
 			if (messageCount % 3 === 0) {
 				const clearCommandMessage = `
-				  > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
-				`;
+          > *Hello! You are currently using the \`${modelName}\` model. If you'd like to start a new conversation, please use the \`/clear\` command. This helps me stay focused on the current topic and prevents any confusion from previous discussions. For a full list of available commands, type \`/help\` command.*
+        `;
 				await botMessage.channel.send(clearCommandMessage);
 			}
 		} catch (error) {
@@ -98,7 +99,6 @@ class ConversationManager {
 	splitResponse(response) {
 		const chunks = [];
 		const maxLength = 2000;
-
 		while (response.length > maxLength) {
 			const chunk = response.slice(0, maxLength);
 			const lastSpaceIndex = chunk.lastIndexOf(' ');
@@ -106,11 +106,9 @@ class ConversationManager {
 			chunks.push(response.slice(0, sliceIndex));
 			response = response.slice(sliceIndex).trim();
 		}
-
 		if (response.length > 0) {
 			chunks.push(response);
 		}
-
 		return chunks;
 	}
 
@@ -135,6 +133,42 @@ class ConversationManager {
 				delete this.lastInteractionTimestamps[userId];
 			}
 		}
+	}
+
+	async startTyping(userId) {
+		const typingInterval = 1000;
+		const typingIntervalId = setInterval(() => {
+			this.getLastMessageChannel(userId)?.sendTyping();
+		}, typingInterval);
+		this.typingIntervalIds[userId] = typingIntervalId;
+	}
+
+	async stopTyping(userId) {
+		if (this.typingIntervalIds[userId]) {
+			clearInterval(this.typingIntervalIds[userId]);
+			delete this.typingIntervalIds[userId];
+		}
+	}
+
+	isActiveConversation(userId) {
+		return this.chatHistories.hasOwnProperty(userId);
+	}
+
+	getActiveConversationsByChannel(channelId) {
+		return Object.keys(this.chatHistories).filter((userId) => {
+			const lastMessage = this.getLastMessage(userId);
+			return lastMessage && lastMessage.channel.id === channelId;
+		});
+	}
+
+	getLastMessage(userId) {
+		const history = this.chatHistories[userId];
+		return history && history.length > 0 ? history[history.length - 1] : null;
+	}
+
+	getLastMessageChannel(userId) {
+		const lastMessage = this.getLastMessage(userId);
+		return lastMessage ? lastMessage.channel : null;
 	}
 }
 

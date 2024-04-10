@@ -1,65 +1,67 @@
+// Import required modules
 require('dotenv').config();
 const express = require('express');
 const { Client, GatewayIntentBits } = require('discord.js');
 const { Anthropic } = require('@anthropic-ai/sdk');
-const { ConversationManager } = require('./conversationManager');
-const { CommandHandler } = require('./commandHandler');
 const async = require('async');
 const rateLimit = require('express-rate-limit');
 const Bottleneck = require('bottleneck');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Import custom modules
+const { ConversationManager } = require('./conversationManager');
+const { CommandHandler } = require('./commandHandler');
 const { config } = require('./config');
 const { ErrorHandler } = require('./errorHandler');
 const { onInteractionCreate } = require('./interactionCreateHandler');
 const { onMessageCreate } = require('./messageCreateHandler');
 
-let activityIndex = 0;
-
+// Initialize Express app
 const app = express();
 app.set('trust proxy', 1);
 const port = process.env.PORT || 4000;
 
+// Initialize Discord client
 const client = new Client({
 	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
 });
 
+// Initialize AI services
 const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,
 	baseURL: process.env.CLOUDFLARE_AI_GATEWAY_URL,
 });
-
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+
+// Initialize custom classes
 const errorHandler = new ErrorHandler();
 const conversationManager = new ConversationManager(errorHandler);
 const commandHandler = new CommandHandler();
 const conversationQueue = async.queue(processConversation, 1);
 
-// Create a rate limiter middleware
+// Create rate limiters
 const limiter = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
-	max: 10, // limit each user to 10 requests per windowMs
+	max: 10, // limit each user to 10 requests per windows
 	message: 'Too many requests, please try again later.',
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 	proxy: true,
 });
-
-// Apply the rate limiter middleware to the Express app
-app.use(limiter);
-
-// Create a rate limiter for the Anthropic API
 const anthropicLimiter = new Bottleneck({
 	maxConcurrent: 1,
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
-
-// Create a rate limiter for the Google Generative AI API
 const googleLimiter = new Bottleneck({
 	maxConcurrent: 1,
 	minTime: 2000, // 30 requests per minute (60000ms / 30 = 2000ms)
 });
 
+// Apply rate limiter middleware to Express app
+app.use(limiter);
+
 // Discord bot event listeners
+let activityIndex = 0;
 client.once('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 	// Set the initial status
@@ -76,35 +78,36 @@ client.once('ready', () => {
 		});
 	}, 30000);
 });
-
 client.on('interactionCreate', async (interaction) => {
 	await onInteractionCreate(interaction, conversationManager, commandHandler, errorHandler);
 });
-
 client.on('messageCreate', async (message) => {
 	await onMessageCreate(message, conversationQueue, errorHandler);
+});
+client.on('guildMemberRemove', async (member) => {
+	const userId = member.user.id;
+	if (conversationManager.isActiveConversation(userId)) {
+		await conversationManager.stopTyping(userId);
+	}
+});
+client.on('channelDelete', async (channel) => {
+	const channelId = channel.id;
+	const activeConversations = conversationManager.getActiveConversationsByChannel(channelId);
+	for (const userId of activeConversations) {
+		await conversationManager.stopTyping(userId);
+	}
 });
 
 // Conversation processing function
 async function processConversation({ message, messageContent }) {
 	try {
-		const typingInterval = 1000;
-		let typingIntervalId;
-		// Start the typing indicator
-		const startTyping = async () => {
-			typingIntervalId = setInterval(() => {
-				message.channel.sendTyping();
-			}, typingInterval);
-		};
-		// Stop the typing indicator
-		const stopTyping = () => {
-			clearInterval(typingIntervalId);
-		};
 		// Start the typing indicator instantly
 		message.channel.sendTyping();
 		const userPreferences = conversationManager.getUserPreferences(message.author.id);
 		console.log(`User preferences for user ${message.author.id}:`, userPreferences);
 		const modelName = userPreferences.model;
+		// Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
+		const shuffledThinkingMessages = shuffleArray(config.thinkingMessages);
 		if (modelName.startsWith('claude')) {
 			// Use Anthropic API (Claude)
 			const systemPrompt = config.getPrompt(userPreferences.prompt);
@@ -117,16 +120,12 @@ async function processConversation({ message, messageContent }) {
 					messages: conversationManager.getHistory(message.author.id).concat([{ role: 'user', content: messageContent }]),
 				}),
 			);
-			// Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
-			const shuffledThinkingMessages = [...config.thinkingMessages];
-			for (let i = shuffledThinkingMessages.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[shuffledThinkingMessages[i], shuffledThinkingMessages[j]] = [shuffledThinkingMessages[j], shuffledThinkingMessages[i]];
-			}
 			// Select the first message from the shuffled array
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
-			await startTyping();
-			await conversationManager.handleModelResponse(botMessage, response, message, stopTyping, errorHandler);
+			await conversationManager.startTyping(message.author.id);
+			await conversationManager.handleModelResponse(botMessage, response, message, async () => {
+				await conversationManager.stopTyping(message.author.id);
+			});
 		} else if (modelName === process.env.GOOGLE_MODEL_NAME) {
 			// Use Google Generative AI
 			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
@@ -137,27 +136,39 @@ async function processConversation({ message, messageContent }) {
 				safetySettings: config.safetySettings,
 				systemInstruction: systemInstruction,
 			});
-			// Shuffle the config.thinkingMessages array using Fisher-Yates shuffle algorithm
-			const shuffledThinkingMessages = [...config.thinkingMessages];
-			for (let i = shuffledThinkingMessages.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[shuffledThinkingMessages[i], shuffledThinkingMessages[j]] = [shuffledThinkingMessages[j], shuffledThinkingMessages[i]];
-			}
 			// Select the first message from the shuffled array
 			const botMessage = await message.reply(shuffledThinkingMessages[0]);
-			await startTyping();
-			await conversationManager.handleModelResponse(botMessage, () => chat.sendMessageStream(messageContent), message, stopTyping);
+			await conversationManager.startTyping(message.author.id);
+			await conversationManager.handleModelResponse(
+				botMessage,
+				() => chat.sendMessageStream(messageContent),
+				message,
+				async () => {
+					await conversationManager.stopTyping(message.author.id);
+				},
+			);
 		}
 		// Check if it's a new conversation or the bot is mentioned
 		if (conversationManager.isNewConversation(message.author.id) || message.mentions.users.has(client.user.id)) {
 			const clearCommandMessage = `
-			  > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
-			`;
+          > *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the \`/clear\` command.*
+        `;
 			await message.channel.send(clearCommandMessage);
 		}
 	} catch (error) {
+		await conversationManager.stopTyping(message.author.id);
 		await errorHandler.handleError(error, message);
 	}
+}
+
+// Utility functions
+function shuffleArray(array) {
+	const shuffledArray = [...array];
+	for (let i = shuffledArray.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+	}
+	return shuffledArray;
 }
 
 // Clear inactive conversations interval
@@ -170,7 +181,6 @@ setInterval(() => {
 process.on('unhandledRejection', (error) => {
 	errorHandler.handleUnhandledRejection(error);
 });
-
 process.on('uncaughtException', (error) => {
 	errorHandler.handleUncaughtException(error);
 });
@@ -179,7 +189,6 @@ process.on('uncaughtException', (error) => {
 app.get('/', (_req, res) => {
 	res.send('Neko Discord Bot is running!');
 });
-
 app.listen(port, () => {
 	console.log(`Neko Discord Bot is listening on port ${port}`);
 });
