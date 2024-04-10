@@ -58,9 +58,10 @@ class CommandHandler {
 				chunks.push(currentChunk);
 			}
 			// Send each chunk as a separate message
-			for (const [index, chunk] of chunks.entries()) {
+			const chunkPromises = chunks.map(async (chunk, index) => {
 				await interaction.user.send(`Here is your saved conversation (part ${index + 1}):\n\n${chunk}`);
-			}
+			});
+			await Promise.all(chunkPromises);
 			await interaction.editReply('> `The conversation has been saved and sent to your inbox.`');
 		} catch (error) {
 			console.error('Error sending conversation to user:', error);

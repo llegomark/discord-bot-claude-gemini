@@ -1,5 +1,7 @@
-const { ConversationManager } = require('./conversationManager');
-const { config } = require('./config');
+/* eslint-disable */
+
+const { ConversationManager } = require('../src/conversationManager');
+const { config } = require('../src/config');
 
 describe('ConversationManager', () => {
 	let conversationManager;
