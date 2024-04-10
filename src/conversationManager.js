@@ -114,7 +114,11 @@ class ConversationManager {
 
 	getUserPreferences(userId) {
 		console.log(`Getting user preferences for user ${userId}:`, this.userPreferences[userId]);
-		return this.userPreferences[userId] ? { ...this.userPreferences[userId] } : { ...this.defaultPreferences };
+		if (!this.userPreferences[userId]) {
+			this.userPreferences[userId] = { ...this.defaultPreferences };
+			console.log(`Default preferences set for user ${userId}:`, this.userPreferences[userId]);
+		}
+		return this.userPreferences[userId];
 	}
 
 	setUserPreferences(userId, preferences) {
