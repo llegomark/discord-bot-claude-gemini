@@ -207,8 +207,6 @@ module.exports.config = {
 		Server Owner: ${ownerUser.tag} (ID: ${ownerUser.id})
 		Member Count: ${guild.memberCount}
 		Created At: ${guild.createdAt}
-  
-		To activate the bot on this server, the server owner needs to provide the allowed channel ID.
 	  `,
 	},
 	getPrompt: function (promptName) {
