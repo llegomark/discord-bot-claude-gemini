@@ -1,9 +1,22 @@
 const { config } = require('./config');
+const redisClient = require('./redisClient');
+
+let allowedChannelIds = [];
+
+async function fetchAllowedChannelIds() {
+	try {
+		const channelIds = await redisClient.smembers('allowedChannelIds');
+		allowedChannelIds = channelIds;
+		console.log('Fetched allowed channel IDs:', allowedChannelIds);
+	} catch (error) {
+		console.error('Error fetching allowed channel IDs:', error);
+	}
+}
 
 async function onMessageCreate(message, conversationQueue, errorHandler, conversationManager) {
 	try {
 		if (message.author.bot) return;
-		const allowedChannelIds = process.env.ALLOWED_CHANNEL_IDS.split(',');
+
 		const isAllowedChannel = allowedChannelIds.includes(message.channel.id);
 		if (isAllowedChannel) {
 			const messageContent = message.content.trim();
@@ -20,5 +33,11 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 		await errorHandler.handleError(error, message);
 	}
 }
+
+// Fetch allowed channel IDs when the module is loaded
+fetchAllowedChannelIds();
+
+// Refresh allowed channel IDs every 5 minutes
+setInterval(fetchAllowedChannelIds, 5 * 60 * 1000);
 
 module.exports = { onMessageCreate };

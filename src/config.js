@@ -178,14 +178,38 @@ module.exports.config = {
 			529: `<@{userId}>, The API is temporarily overloaded. Please try again later.`,
 			default: `<@{userId}>, Sorry, I couldn't generate a response.`,
 		},
-		activationMessage: `Hello! Thank you for adding me to your server. To activate the bot, please DM <@1012984419029622784> on Discord.
-		If you're interested in checking out the bot's source code, you can find it on GitHub: https://github.com/llegomark/discord-bot-claude-gemini`,
-		notificationMessage: (guild, ownerUser) => `The bot has been added to a new server!
+		activationMessage: `
+		Hello! Thank you for adding me to your server. 🙌
+  
+		To activate the bot and allow it to respond to messages, please follow these steps:
+  
+		1. Create a new channel dedicated for bot usage (recommended) or choose an existing channel where you want the bot to respond.
+  
+		2. To get the channel ID, right-click on the channel name and select 'Copy Link.' Alternatively, if developer mode is enabled, simply click 'Copy ID.
+  
+		3. DM <@1012984419029622784> on Discord with the following information (do not DM the bot directly):
+		   - Server Name: [Your Server Name]
+		   - Channel ID: [Copied Channel ID or Channel URL]
+  
+		4. Once the bot is activated, it will respond to messages in the designated channel.
+  
+		Note: The bot replies to every conversation in the allowed channel, so it's recommended to create a separate channel for bot usage to avoid clutter in other channels.
+  
+		If you're interested in checking out the bot's source code, you can find it on GitHub: https://github.com/llegomark/discord-bot-claude-gemini
+  
+		Happy chatting! 🤖💬
+	  `,
+		notificationMessage: (guild, ownerUser) => `
+		The bot has been added to a new server! 🎉
+  
 		Server Name: ${guild.name}
 		Server ID: ${guild.id}
 		Server Owner: ${ownerUser.tag} (ID: ${ownerUser.id})
 		Member Count: ${guild.memberCount}
-		Created At: ${guild.createdAt}`,
+		Created At: ${guild.createdAt}
+  
+		To activate the bot on this server, the server owner needs to provide the allowed channel ID.
+	  `,
 	},
 	getPrompt: function (promptName) {
 		return this.prompts[promptName] || '';
