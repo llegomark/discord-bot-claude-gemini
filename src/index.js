@@ -15,45 +15,11 @@ const { config } = require('./config');
 const { ErrorHandler } = require('./errorHandler');
 const { onInteractionCreate } = require('./interactionCreateHandler');
 const { onMessageCreate } = require('./messageCreateHandler');
-const redisClient = require('./redisClient');
 
 // Initialize Express app
 const app = express();
 app.set('trust proxy', 1);
 const port = process.env.PORT || 4000;
-app.use(express.json());
-
-const API_KEY = process.env.API_KEY;
-
-// Middleware to verify the API key
-function verifyApiKey(req, res, next) {
-	const apiKey = req.headers['x-api-key'];
-	if (!apiKey || apiKey !== API_KEY) {
-		return res.status(401).json({ error: 'Unauthorized' });
-	}
-	next();
-}
-
-// Routes
-app.post('/api/allowedChannels', verifyApiKey, async (req, res) => {
-	const { channelId, action } = req.body;
-	if (!channelId || !action) {
-		return res.status(400).json({ error: 'Missing channelId or action' });
-	}
-	try {
-		if (action === 'add') {
-			await redisClient.sadd('allowedChannelIds', channelId);
-		} else if (action === 'remove') {
-			await redisClient.srem('allowedChannelIds', channelId);
-		} else {
-			return res.status(400).json({ error: 'Invalid action' });
-		}
-		res.status(200).json({ message: 'Channel ID updated successfully' });
-	} catch (error) {
-		console.error('Error updating allowed channel IDs:', error);
-		res.status(500).json({ error: 'Internal server error' });
-	}
-});
 
 // Initialize Discord client
 const client = new Client({
@@ -95,7 +61,7 @@ const limiter = rateLimit({
 	message: 'Too many requests, please try again later.',
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-	proxy: true, // Enable if you're behind a reverse proxy
+	proxy: true,
 });
 
 const anthropicLimiter = new Bottleneck({
