@@ -23,7 +23,13 @@ const port = process.env.PORT || 4000;
 
 // Initialize Discord client
 const client = new Client({
-	intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
+	intents: [
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.MessageContent,
+		GatewayIntentBits.DirectMessages,
+		GatewayIntentBits.GuildMembers,
+	],
 });
 
 // Initialize AI services
@@ -110,6 +116,16 @@ client.on('channelDelete', async (channel) => {
 	const activeConversations = conversationManager.getActiveConversationsByChannel(channelId);
 	const stopTypingPromises = activeConversations.map((userId) => conversationManager.stopTyping(userId));
 	await Promise.all(stopTypingPromises);
+});
+
+client.on('guildCreate', async (guild) => {
+	const ownerUser = await client.users.fetch(guild.ownerId);
+	await ownerUser.send(config.messages.activationMessage);
+
+	const botCreatorId = process.env.DISCORD_USER_ID;
+	const botCreator = await client.users.fetch(botCreatorId);
+	const notificationMessage = config.messages.notificationMessage(guild, ownerUser);
+	await botCreator.send(notificationMessage);
 });
 
 // Conversation processing function

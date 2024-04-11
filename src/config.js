@@ -158,16 +158,34 @@ module.exports.config = {
 		newConversation:
 			"> *Hello! I'm Neko, your friendly AI assistant. You are not required to mention me in your messages. Feel free to start a conversation, and I'll respond accordingly. If you want to clear the conversation history, use the `/clear` command.*",
 		privacyNotice: `
-						||\u200B||
-						:warning: **Please be aware that your conversations with me in this channel are public and visible to anyone who can access this channel.** :warning:
-						||\u200B||
-						If you prefer to have a private conversation, please note that I do not respond to direct messages or private conversations. All interactions with me should take place in the designated channels where I am installed.
-						||\u200B||
-						By continuing this conversation, you acknowledge that your messages and my responses will be visible to others in this channel. If you have any sensitive or personal information, please refrain from sharing it here.
-						||\u200B||
-						If you have any concerns or questions about the privacy of our interactions, please contact the server administrators.
-						||\u200B||
-					`,
+				||\u200B||
+				:warning: **Please be aware that your conversations with me in this channel are public and visible to anyone who can access this channel.** :warning:
+				||\u200B||
+				If you prefer to have a private conversation, please note that I do not respond to direct messages or private conversations. All interactions with me should take place in the designated channels where I am installed.
+				||\u200B||
+				By continuing this conversation, you acknowledge that your messages and my responses will be visible to others in this channel. If you have any sensitive or personal information, please refrain from sharing it here.
+				||\u200B||
+				If you have any concerns or questions about the privacy of our interactions, please contact the server administrators.
+				||\u200B||
+			  `,
+		handleModelResponseError: {
+			429: `<@{userId}>, Meow, I'm a bit overloaded right now. Please try again later! 😿`,
+			400: `<@{userId}>, Oops, there was an issue with the format or content of the request. Please try again.`,
+			401: `<@{userId}>, Uh-oh, there seems to be an issue with the API key. Please contact the bot owner.`,
+			403: `<@{userId}>, Sorry, the API key doesn't have permission to use the requested resource.`,
+			404: `<@{userId}>, The requested resource was not found. Please check your request and try again.`,
+			500: `<@{userId}>, An unexpected error occurred on the API provider's end. Please try again later.`,
+			529: `<@{userId}>, The API is temporarily overloaded. Please try again later.`,
+			default: `<@{userId}>, Sorry, I couldn't generate a response.`,
+		},
+		activationMessage: `Hello! Thank you for adding me to your server. To activate the bot, please DM <@1012984419029622784> on Discord.
+		If you're interested in checking out the bot's source code, you can find it on GitHub: https://github.com/llegomark/discord-bot-claude-gemini`,
+		notificationMessage: (guild, ownerUser) => `The bot has been added to a new server!
+		Server Name: ${guild.name}
+		Server ID: ${guild.id}
+		Server Owner: ${ownerUser.tag} (ID: ${ownerUser.id})
+		Member Count: ${guild.memberCount}
+		Created At: ${guild.createdAt}`,
 	},
 	getPrompt: function (promptName) {
 		return this.prompts[promptName] || '';

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { WebhookClient } = require('discord.js');
+const { config } = require('./config');
 
 class ErrorHandler {
 	constructor() {
@@ -48,35 +49,21 @@ class ErrorHandler {
 
 	async handleModelResponseError(error, botMessage, originalMessage) {
 		console.error(error.message);
-		if (error.status === 429) {
-			await botMessage.edit(`<@${originalMessage.author.id}>, Meow, I'm a bit overloaded right now. Please try again later! 😿`);
-		} else if (error.status === 400) {
-			await botMessage.edit(
-				`<@${originalMessage.author.id}>, Oops, there was an issue with the format or content of the request. Please try again.`,
-			);
-		} else if (error.status === 401) {
-			await botMessage.edit(
-				`<@${originalMessage.author.id}>, Uh-oh, there seems to be an issue with the API key. Please contact the bot owner.`,
-			);
-		} else if (error.status === 403) {
-			await botMessage.edit(`<@${originalMessage.author.id}>, Sorry, the API key doesn't have permission to use the requested resource.`);
-		} else if (error.status === 404) {
-			await botMessage.edit(
-				`<@${originalMessage.author.id}>, The requested resource was not found. Please check your request and try again.`,
-			);
-		} else if (error.status === 500) {
-			await botMessage.edit(
-				`<@${originalMessage.author.id}>, An unexpected error occurred on the API provider's end. Please try again later.`,
-			);
-		} else if (error.status === 529) {
-			await botMessage.edit(`<@${originalMessage.author.id}>, The API is temporarily overloaded. Please try again later.`);
+		const userId = originalMessage.author.id;
+		const errorMessages = config.messages.handleModelResponseError;
+
+		let errorMessage;
+		if (error.status && errorMessages[error.status]) {
+			errorMessage = errorMessages[error.status].replace('{userId}', userId);
 		} else {
-			await botMessage.edit(`<@${originalMessage.author.id}>, Sorry, I couldn't generate a response.`);
+			errorMessage = errorMessages.default.replace('{userId}', userId);
 		}
+
+		await botMessage.edit(errorMessage);
+
 		// Send the error to the ErrorHandler for notification
 		await this.handleError(error, originalMessage);
 	}
-
 	handleUnhandledRejection(error) {
 		console.error('Unhandled Rejection:', error);
 		// Log error details for debugging
