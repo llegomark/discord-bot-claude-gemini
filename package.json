@@ -15,7 +15,7 @@
 	"author": "Mark Anthony Llego",
 	"license": "MIT",
 	"dependencies": {
-		"@anthropic-ai/sdk": "^0.20.2",
+		"@anthropic-ai/sdk": "^0.20.3",
 		"@google/generative-ai": "^0.5.0",
 		"async": "^3.2.5",
 		"bottleneck": "^2.19.5",
