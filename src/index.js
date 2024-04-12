@@ -201,12 +201,10 @@ async function processConversation({ message, messageContent }) {
 			// Use Google Generative AI
 			const genAIIndex = message.id % genAIInstances.length;
 			const genAI = genAIInstances[genAIIndex];
-			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }));
-			const systemInstruction = config.getPrompt(userPreferences.prompt);
+			const model = await googleLimiter.schedule(() => genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1beta' }));
 			const chat = model.startChat({
 				history: conversationManager.getGoogleHistory(message.author.id),
 				safetySettings: config.safetySettings,
-				systemInstruction: systemInstruction,
 			});
 
 			// Select the first message from the shuffled array
