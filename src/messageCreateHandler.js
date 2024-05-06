@@ -21,7 +21,7 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 
 		const isAllowedChannel = allowedChannelIds.includes(message.channel.id);
 		if (isAllowedChannel) {
-			let messageContent = '';
+			let messageContent = message.content.trim();
 
 			if (message.attachments.size > 0) {
 				const attachment = message.attachments.first();
@@ -30,7 +30,8 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 				if (attachmentExtension === 'txt') {
 					try {
 						const response = await fetch(attachment.url);
-						messageContent = await response.text();
+						const attachmentContent = await response.text();
+						messageContent += `\n\n${attachmentContent}`;
 					} catch (error) {
 						console.error('Error fetching text attachment:', error);
 						await message.reply("> `Sorry, there was an error processing your text attachment. Please try again.`");
@@ -55,7 +56,7 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 						});
 
 						const data = await pdfParse(pdfBuffer);
-						messageContent = data.text;
+						messageContent += `\n\n${data.text}`;
 					} catch (error) {
 						console.error('Error parsing PDF attachment:', error);
 						if (error.message.includes('Could not parse')) {
@@ -69,11 +70,9 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 					await message.reply("> `Sorry, only .txt and .pdf file attachments are supported.`");
 					return;
 				}
-			} else {
-				messageContent = message.content.trim();
 			}
 
-			if (messageContent === '') {
+			if (messageContent.trim() === '') {
 				await message.reply("> `It looks like you didn't say anything. What would you like to talk about?`");
 				return;
 			}
