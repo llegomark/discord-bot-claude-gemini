@@ -37,14 +37,32 @@ async function onMessageCreate(message, conversationQueue, errorHandler, convers
 						return;
 					}
 				} else if (attachmentExtension === 'pdf') {
+					const maxFileSize = 30 * 1024 * 1024; // 30MB
+					if (attachment.size > maxFileSize) {
+						await message.reply("> `Sorry, the file size exceeds the maximum limit of 30MB. Please provide a smaller file.`");
+						return;
+					}
+
 					try {
 						const response = await fetch(attachment.url);
-						const buffer = await response.buffer();
-						const data = await pdfParse(buffer);
+						const pdfReadableStream = response.body;
+
+						const pdfBuffer = await new Promise((resolve, reject) => {
+							const chunks = [];
+							pdfReadableStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+							pdfReadableStream.on('error', (err) => reject(err));
+							pdfReadableStream.on('end', () => resolve(Buffer.concat(chunks)));
+						});
+
+						const data = await pdfParse(pdfBuffer);
 						messageContent = data.text;
 					} catch (error) {
 						console.error('Error parsing PDF attachment:', error);
-						await message.reply("> `Sorry, there was an error processing your PDF attachment. Please try again.`");
+						if (error.message.includes('Could not parse')) {
+							await message.reply("> `Sorry, the PDF file you provided is invalid or corrupted. Please try again with a valid PDF.`");
+						} else {
+							await message.reply("> `Sorry, there was an error processing your PDF attachment. Please try again.`");
+						}
 						return;
 					}
 				} else {
